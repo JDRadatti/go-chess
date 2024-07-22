@@ -11,6 +11,8 @@ const (
 	address = "127.0.0.1:8080"
 )
 
+var count int = 0
+
 func main() {
 	if len(os.Args) != 2 {
 		panic("flags required: -s to start server")
@@ -25,28 +27,27 @@ func main() {
 }
 
 func startServer() error {
-
-	ln, err := net.Listen("tcp", address)
+	conn, err := net.ListenPacket("udp", address)
 	if err != nil {
 		panic(err)
 	}
+	defer conn.Close()
 	log.Println("Listening from: ", address)
 	for {
-		conn, err := ln.Accept()
+		buffer := make([]byte, 1024)
+		_, addr, err := conn.ReadFrom(buffer)
 		if err != nil {
 			panic(err)
 		}
-		go rogerThat(conn)
+		log.Println("server recieved", string(buffer))
+		go rogerThat(conn, addr)
 	}
 }
 
 // Sends the client a copy of what the client sent it
-func rogerThat(conn net.Conn) {
-	request := make([]byte, 1024)
-	_, err := conn.Read(request)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Server recieved: %s", request)
+func rogerThat(conn net.PacketConn, addr net.Addr) {
+	response := fmt.Sprintf("Num of responses %d", count)
+    log.Println("server sent: ", string(response))
+	conn.WriteTo([]byte(response), addr)
+	count++
 }

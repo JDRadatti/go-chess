@@ -1,9 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net"
 	"os"
+)
+
+const (
+	address = "127.0.0.1:8080"
 )
 
 func main() {
@@ -13,30 +17,37 @@ func main() {
 
 	switch os.Args[1] {
 	case "-c":
-		conn := connectToServer()
-		for i := 0; i < 10; i++ {
-			doSomething(conn, i)
-		}
+		connectToServer()
 	default:
 		panic("invalid flag")
 	}
 }
 
-func connectToServer() net.Conn {
-	conn, err := net.Dial("tcp", ":8080")
+func connectToServer() {
+	udpAddr, err := net.ResolveUDPAddr("udp", address)
 	if err != nil {
 		panic(err)
 	}
-	return conn
-}
-
-func doSomething(conn net.Conn, i int) {
-	fmt.Fprintf(conn, "do something %d\n", i)
-	response := make([]byte, 1024)
-	_, err := conn.Read(response)
+	conn, err := net.DialUDP("udp", nil, udpAddr)
 	if err != nil {
 		panic(err)
 	}
+	defer conn.Close()
 
-	fmt.Println("response from server: ", response)
+	for i := 0; i < 10; i++ {
+		send := []byte("[sending from client]")
+		_, err := conn.Write(send)
+		if err != nil {
+			panic(err)
+		}
+		log.Println("Sent: ", string(send))
+
+		buffer := make([]byte, 1024)
+		_, err = conn.Read(buffer)
+		if err != nil {
+			panic(err)
+		}
+
+		log.Println("Recieved: ", string(buffer))
+	}
 }
