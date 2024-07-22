@@ -40,7 +40,7 @@ func connectToServer() {
 		if err != nil {
 			panic(err)
 		}
-		log.Println("Sent: ", string(send))
+		log.Println("client sent ", string(send))
 
 		buffer := make([]byte, 1024)
 		_, err = conn.Read(buffer)
@@ -48,6 +48,6 @@ func connectToServer() {
 			panic(err)
 		}
 
-		log.Println("Recieved: ", string(buffer))
+		log.Println("client recieved ", string(buffer))
 	}
 }
