@@ -7,6 +7,10 @@ import (
 	"os"
 )
 
+const (
+	address = "127.0.0.1:8080"
+)
+
 func main() {
 	if len(os.Args) != 2 {
 		panic("flags required: -s to start server")
@@ -22,12 +26,11 @@ func main() {
 
 func startServer() error {
 
-	port := ":8080"
-	ln, err := net.Listen("tcp", port)
+	ln, err := net.Listen("tcp", address)
 	if err != nil {
 		panic(err)
 	}
-	log.Println("Listening on port: ", port)
+	log.Println("Listening from: ", address)
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -39,7 +42,7 @@ func startServer() error {
 
 // Sends the client a copy of what the client sent it
 func rogerThat(conn net.Conn) {
-    request := make([]byte, 1024)
+	request := make([]byte, 1024)
 	_, err := conn.Read(request)
 	if err != nil {
 		panic(err)
