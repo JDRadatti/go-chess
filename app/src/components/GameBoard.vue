@@ -3,7 +3,7 @@
 
 <template>
     <div>
-        <h1 class="green">This is your game board</h1>
+        <h1 class="green">This is your game board {{ $route.params.id }}</h1>
     </div>
 </template>
 
