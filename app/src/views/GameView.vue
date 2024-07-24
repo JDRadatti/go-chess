@@ -1,12 +1,16 @@
 <script setup>
 import GameBoard from '../components/GameBoard.vue'
+import { ref } from 'vue'
+
+const move = ref("")
+var connected = false
 
 if (window["WebSocket"]) {
     var conn = new WebSocket("ws://" + document.location.host + "/game/123");
     conn.onclose = function (event) {
         var item = document.createElement("div");
         item.innerHTML = "<b>Connection closed.</b>";
-        console.log("CONNECTIKON CLOSED");
+        connected = false
     };
     conn.onmessage = function (event) {
         var messages = event.data.split('\n');
@@ -18,7 +22,8 @@ if (window["WebSocket"]) {
     };
 
     conn.onopen = function (event) {
-        conn.send("Here's some text that the server is urgently awaiting!");
+        connected = true
+        conn.send("I have joined the game");
     }
 
 
@@ -27,12 +32,30 @@ if (window["WebSocket"]) {
     item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
     console.log(item);
 }
+
+function sendMove() {
+    if (connected) {
+        //const msg = {
+        //    move: move.value,
+        //    date: Date.now(),
+        //};
+
+        // Send the msg object as a JSON-formatted string.
+        //conn.send(JSON.stringify(msg));
+        conn.send(move.value);
+    }
+}
 </script>
 
 <template>
     <main>
         <h1>Game</h1>
         <GameBoard />
+        <form>
+            <input v-model="move" placeholder="Make Move"></input>
+        </form>
+        <button @click="sendMove">Send</button>
+        <p>Previous move: {{ move }}</p>
     </main>
 </template>
 
