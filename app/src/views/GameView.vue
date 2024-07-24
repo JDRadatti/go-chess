@@ -1,12 +1,14 @@
 <script setup>
 import GameBoard from '../components/GameBoard.vue'
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 const move = ref("")
 var connected = false
+const route = useRoute()
 
 if (window["WebSocket"]) {
-    var conn = new WebSocket("ws://" + document.location.host + "/game/123");
+    var conn = new WebSocket("ws://" + document.location.host + "/game/" + route.params.id);
     conn.onclose = function (event) {
         var item = document.createElement("div");
         item.innerHTML = "<b>Connection closed.</b>";
