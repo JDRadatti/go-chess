@@ -41,11 +41,13 @@ func newGame(id string) *Game {
 	return newGame
 }
 
-func createOrGet(lobby *Lobby, id string) *Game {
+func createOrAdd(lobby *Lobby, id string) *Game {
 	if game, ok := lobby.getGame(id); ok {
 		return game
 	}
-	return newGame(id)
+    game := newGame(id)
+    lobby.addGame(game)
+    return game
 }
 
 func (g *Game) addPlayer(p *Player) error {
