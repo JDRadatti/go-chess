@@ -9,13 +9,12 @@ import (
 
 var addr = flag.String("addr", ":3000", "http server address")
 
-func serveHome() {
+func serveHome(lobby *websocket.Lobby) {
     router := http.NewServeMux()
 	router.HandleFunc("GET /game/{id}", func(w http.ResponseWriter, r *http.Request) {
         if _, ok := r.Header["Upgrade"]; ok {
             idString := r.PathValue("id")
-            log.Println(idString)
-            websocket.ServeWebSocket(w, r)
+            websocket.ServeWebSocket(w, r, lobby, idString)
         } else {
             http.ServeFile(w, r, "app/dist/index.html")
         }
@@ -28,5 +27,6 @@ func serveHome() {
 
 func main() {
 	flag.Parse()
-	serveHome()
+    lobby := websocket.NewLobby()
+	serveHome(lobby)
 }

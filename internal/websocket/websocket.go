@@ -11,22 +11,21 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func ServeWebSocket(w http.ResponseWriter, r *http.Request) {
+func ServeWebSocket(w http.ResponseWriter, r *http.Request, l *Lobby, id string) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	for {
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		if err := conn.WriteMessage(messageType, p); err != nil {
-			log.Println(err)
-			return
-		}
-	}
+    game := createOrGet(l, id)
+    player := newPlayer(game, l, conn)
+    err = game.addPlayer(player)
+    if err != nil {
+        panic(err)
+    }
+    log.Println("GAME: ", game)
+
+    go player.write()
+    go player.read()
 }
