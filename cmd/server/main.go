@@ -12,10 +12,14 @@ var addr = flag.String("addr", ":3000", "http server address")
 func serveHome() {
     router := http.NewServeMux()
 	router.HandleFunc("GET /game/{id}", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("game id", r)
-        idString := r.PathValue("id")
-        log.Println(idString)
-        websocket.ServeWebSocket(w, r)
+        if _, ok := r.Header["Upgrade"]; ok {
+            idString := r.PathValue("id")
+            log.Println(idString)
+            websocket.ServeWebSocket(w, r)
+        } else {
+            http.ServeFile(w, r, "app/dist/index.html")
+        }
+
 	})
 	router.Handle("/", http.FileServer(http.Dir("app/dist")))
 	log.Println("http server listening from", *addr)
