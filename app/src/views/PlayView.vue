@@ -1,10 +1,10 @@
 <script setup>
 import GameBoard from '../components/GameBoard.vue'
 import GameOptions from '../components/GameOptions.vue'
-import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
-const route = useRoute()
+const router = useRouter()
 var time = 10
 var increment = 0
 
@@ -13,7 +13,8 @@ function startGame() {
         Time: time,
         Increment: increment,
     }).then(response => {
-        console.log("data: ", response.data)
+        const gameID = response.data
+        router.push(`/game/${gameID}`)
     }).catch(error => {
         console.log(error)
     })
