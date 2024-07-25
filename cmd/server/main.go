@@ -14,15 +14,13 @@ func serveHome(lobby *websocket.Lobby) {
 	router := http.NewServeMux()
 
 	router.HandleFunc("POST /play", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("play")
 		api.HandlePlay(w, r, lobby)
 	})
 	router.HandleFunc("GET /play/", func(w http.ResponseWriter, r *http.Request) {
         http.ServeFile(w, r, "app/dist/index.html")
 	})
 	router.HandleFunc("GET /game/{id}", func(w http.ResponseWriter, r *http.Request) {
-		idString := r.PathValue("id")
-		log.Println("game ", idString)
+		//idString := r.PathValue("id")
 		websocket.ServeWebSocket(w, r, lobby)
 	})
 	router.Handle("/", http.FileServer(http.Dir("app/dist")))
