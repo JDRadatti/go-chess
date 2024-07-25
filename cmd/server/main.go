@@ -17,8 +17,7 @@ func serveHome(lobby *websocket.Lobby) {
 		log.Println("play")
 		api.HandlePlay(w, r, lobby)
 	})
-	router.HandleFunc("GET /play", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("get play")
+	router.HandleFunc("GET /play/", func(w http.ResponseWriter, r *http.Request) {
         http.ServeFile(w, r, "app/dist/index.html")
 	})
 	router.HandleFunc("GET /game/{id}", func(w http.ResponseWriter, r *http.Request) {
