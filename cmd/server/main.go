@@ -17,11 +17,15 @@ func serveHome(lobby *websocket.Lobby) {
 		api.HandlePlay(w, r, lobby)
 	})
 	router.HandleFunc("GET /play/", func(w http.ResponseWriter, r *http.Request) {
-        http.ServeFile(w, r, "app/dist/index.html")
+		http.ServeFile(w, r, "app/dist/index.html")
 	})
 	router.HandleFunc("GET /game/{id}", func(w http.ResponseWriter, r *http.Request) {
-		//idString := r.PathValue("id")
-		websocket.ServeWebSocket(w, r, lobby)
+		if _, ok := r.Header["Upgrade"]; ok {
+			//idString := r.PathValue("id")
+			websocket.ServeWebSocket(w, r, lobby)
+		} else {
+			http.ServeFile(w, r, "app/dist/index.html")
+		}
 	})
 	router.Handle("/", http.FileServer(http.Dir("app/dist")))
 	log.Println("http server listening from", *addr)
