@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"errors"
+	"github.com/google/uuid"
 	"log"
 )
 
@@ -31,23 +32,19 @@ type Game struct {
 	Moves chan string // Moves send from both white and black
 }
 
-func newGame(id string) *Game {
+func newGame() *Game {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		panic(err)
+	}
+
 	newGame := &Game{
-		ID:    id,
+		ID:    id.String(),
 		Moves: make(chan string),
 		State: GameState.WAITING,
 	}
 	go newGame.play()
 	return newGame
-}
-
-func createOrAdd(lobby *Lobby, id string) *Game {
-	if game, ok := lobby.getGame(id); ok {
-		return game
-	}
-    game := newGame(id)
-    lobby.addGame(game)
-    return game
 }
 
 func (g *Game) addPlayer(p *Player) error {
@@ -62,19 +59,17 @@ func (g *Game) addPlayer(p *Player) error {
 }
 
 func (g *Game) play() {
-	for {
-		switch g.State {
-		case GameState.WAITING:
-			log.Println("WAITING")
-            // wait for another player to join
-		case GameState.WHITETURN :
-			log.Println("WHITETURN")
-            // get white's move
-		case GameState.BLACKTURN:
-			log.Println("BLACKTURN")
-            // get black's move
+	// Wait for both players to join
+	for g.State == GameState.WAITING {
+		log.Println("WAITING")
+		if g.White != nil && g.Black != nil {
+			g.State = GameState.WHITETURN
 		}
+	}
+	log.Println("Both palyers have joined", g.State)
 
+	// Start playing the game
+	for {
 		select {
 		case move := <-g.Moves:
 			log.Println(move)
