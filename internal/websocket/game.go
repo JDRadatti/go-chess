@@ -1,9 +1,8 @@
 package websocket
 
 import (
+    "github.com/google/uuid"
 	"errors"
-	"github.com/google/uuid"
-	"log"
 )
 
 type State int8
@@ -25,7 +24,7 @@ var GameState = struct {
 }
 
 type Game struct {
-	ID    string
+	ID    string 
 	White *Player
 	Black *Player
 	State State
@@ -33,17 +32,17 @@ type Game struct {
 }
 
 func newGame() *Game {
-	id, err := uuid.NewRandom()
+
+	gameID, err := uuid.NewRandom()
 	if err != nil {
 		panic(err)
 	}
 
 	newGame := &Game{
-		ID:    id.String(),
+        ID:    gameID.String()[:8],
 		Moves: make(chan string),
 		State: GameState.WAITING,
 	}
-	go newGame.play()
 	return newGame
 }
 
@@ -59,31 +58,4 @@ func (g *Game) addPlayer(p *Player) error {
 }
 
 func (g *Game) play() {
-	// Wait for both players to join
-	for g.State == GameState.WAITING {
-		log.Println("WAITING")
-		if g.White != nil && g.Black != nil {
-			g.State = GameState.WHITETURN
-		}
-	}
-	log.Println("Both palyers have joined", g.State)
-
-	// Start playing the game
-	for {
-		select {
-		case move := <-g.Moves:
-			log.Println(move)
-		}
-		// check if both players are connected
-		// connection timeout?
-
-		// check for incoming move requests
-		// if move, check if valid and update state and send to
-		// both players
-
-		// check for incoming draw or abort requests
-		//
-
-	}
-
 }
