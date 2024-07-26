@@ -1,19 +1,19 @@
 package websocket
 
 import (
-	"github.com/gorilla/websocket"
+	"encoding/json"
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	"log"
-    "encoding/json"
 )
 
 type Player struct {
-	ID    string 
-	Game  *Game
-	Lobby *Lobby
-	Conn  *websocket.Conn
-	Move  chan string
-    InGame chan struct{}
+	ID     string
+	Game   *Game
+	Lobby  *Lobby
+	Conn   *websocket.Conn
+	Move   chan string
+	InGame chan struct{}
 }
 
 var (
@@ -22,17 +22,17 @@ var (
 )
 
 func NewPlayer(l *Lobby, conn *websocket.Conn) *Player {
-    playerID, err := uuid.NewRandom()
+	playerID, err := uuid.NewRandom()
 	if err != nil {
 		panic(err)
 	}
 
 	return &Player{
-		ID:    playerID.String()[:8],
-		Lobby: l,
-        Conn: conn,
-		Move:  make(chan string),
-        InGame: make(chan struct{}),
+		ID:     playerID.String()[:8],
+		Lobby:  l,
+		Conn:   conn,
+		Move:   make(chan string),
+		InGame: make(chan struct{}),
 	}
 }
 
@@ -42,7 +42,7 @@ func (p *Player) AddConn(conn *websocket.Conn) {
 
 // wait for match making to add player to a game
 func (p *Player) WaitForGame() {
-    <-p.InGame // Wait until matchmaking finishes
+	<-p.InGame // Wait until matchmaking finishes
 
 	payload := GameAccepted{
 		PlayerID: p.ID,
@@ -61,7 +61,7 @@ func (p *Player) WaitForGame() {
 
 // write message from the Game to the websocket
 func (p *Player) write() {
-    p.WaitForGame()
+	p.WaitForGame()
 	for {
 		select {
 		case message := <-p.Move:
@@ -75,7 +75,7 @@ func (p *Player) write() {
 
 // read message from the websocket and notify the Game
 func (p *Player) read() {
-    <-p.InGame
+	<-p.InGame
 	for {
 		_, message, err := p.Conn.ReadMessage()
 		if err != nil {
@@ -84,6 +84,14 @@ func (p *Player) read() {
 			}
 			break
 		}
-		log.Println("Connection SAYS: ", string(message))
+
+        var payload *MoveRequest = &MoveRequest{}
+        log.Println(string(message))
+		err = json.Unmarshal(message, payload)
+		if err != nil {
+			log.Printf("error: %v", err)
+		}
+        log.Println(*payload)
+        p.Game.Moves <- payload
 	}
 }
