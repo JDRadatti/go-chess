@@ -4,6 +4,8 @@ import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const move = ref("")
+const gameID = ref("")
+const playerID = ref("")
 var connected = false
 const route = useRoute()
 
@@ -17,15 +19,15 @@ if (window["WebSocket"]) {
     conn.onmessage = function (event) {
         var messages = event.data.split('\n');
         for (var i = 0; i < messages.length; i++) {
-            var item = document.createElement("div");
-            item.innerText = messages[i];
-            console.log("MESSAGE", messages[i]);
+            var message = messages[i];
+            var parsed = JSON.parse(message)
+            playerID.value = parsed["PlayerID"];
+            gameID.value = parsed["GameID"];
         }
     };
 
     conn.onopen = function (event) {
         connected = true
-        conn.send("I have joined the game");
     }
 
 
@@ -37,14 +39,14 @@ if (window["WebSocket"]) {
 
 function sendMove() {
     if (connected) {
-        //const msg = {
-        //    move: move.value,
-        //    date: Date.now(),
-        //};
-
-        // Send the msg object as a JSON-formatted string.
-        //conn.send(JSON.stringify(msg));
-        conn.send(move.value);
+        const msg = {
+            PlayerID: playerID.value,
+            GameID: gameID.value,
+            Move: move.value,
+            date: Date.now(),
+        };
+        conn.send(JSON.stringify(msg));
+        console.log("message", msg)
     }
 }
 </script>
@@ -58,6 +60,8 @@ function sendMove() {
         </form>
         <button @click="sendMove">Send</button>
         <p>Previous move: {{ move }}</p>
+        <p>PlayerID: {{ gameID }}</p>
+        <p>GameID: {{ playerID }}</p>
     </main>
 </template>
 
