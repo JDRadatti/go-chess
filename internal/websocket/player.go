@@ -1,18 +1,19 @@
 package websocket
 
 import (
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/google/uuid"
 	"log"
-	"time"
+    "encoding/json"
 )
 
 type Player struct {
-	ID    uuid.UUID
+	ID    string 
 	Game  *Game
 	Lobby *Lobby
 	Conn  *websocket.Conn
 	Move  chan string
+    InGame chan struct{}
 }
 
 var (
@@ -20,48 +21,47 @@ var (
 	matchMakingMaxWait = 60 // seconds
 )
 
-func newPlayer(l *Lobby, c *websocket.Conn) *Player {
-	id, err := uuid.NewRandom()
+func NewPlayer(l *Lobby, conn *websocket.Conn) *Player {
+    playerID, err := uuid.NewRandom()
 	if err != nil {
 		panic(err)
 	}
+
 	return &Player{
-		ID:    id,
+		ID:    playerID.String()[:8],
 		Lobby: l,
-		Conn:  c,
+        Conn: conn,
 		Move:  make(chan string),
+        InGame: make(chan struct{}),
 	}
 }
 
+func (p *Player) AddConn(conn *websocket.Conn) {
+	p.Conn = conn
+}
+
 // wait for match making to add player to a game
-func (p *Player) waitForGame() {
+func (p *Player) WaitForGame() {
+    <-p.InGame // Wait until matchmaking finishes
 
-	ticker := time.NewTicker(time.Duration(matchMakingMaxWait))
-	defer func() { ticker.Stop() }()
-
-	for {
-		if p.Game != nil {
-			if err := p.Conn.WriteMessage(messageType, []byte(p.Game.ID)); err != nil {
-				log.Printf("error: %v", err)
-			}
-			return
-		}
-
-		select {
-		case <-ticker.C:
-			if err := p.Conn.WriteMessage(messageType, []byte("here")); err != nil {
-				log.Printf("error: %v", err)
-			}
-			return
-		}
+	payload := GameAccepted{
+		PlayerID: p.ID,
+		GameID:   p.Game.ID,
 	}
 
+	marshled, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("error: %v", err)
+	}
+
+	if err := p.Conn.WriteMessage(websocket.TextMessage, marshled); err != nil {
+		log.Printf("error: %v", err)
+	}
 }
 
 // write message from the Game to the websocket
 func (p *Player) write() {
-	p.waitForGame()
-	log.Println("FOUND GAME: ", p.Game)
+    p.WaitForGame()
 	for {
 		select {
 		case message := <-p.Move:
