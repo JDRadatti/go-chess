@@ -1,11 +1,5 @@
 package websocket
 
-import (
-	"encoding/json"
-	"github.com/gorilla/websocket"
-	"log"
-)
-
 // MoveRequest is sent from client to request a move
 type MoveRequest struct {
 	PlayerID string
