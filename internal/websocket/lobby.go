@@ -2,32 +2,30 @@ package websocket
 
 import (
 	"log"
-	"net/http"
 )
 
 type Lobby struct {
-	Games      map[string]*Game // Current running games (has both players)
-	GamePool   chan *Game       // Current waiting games (only one player)
-	PlayerPool chan *Player     // Players who are waiting for a game
+	Games      map[string]*Game   // Current running games (has both players)
+	Players    map[string]*Player // Current Players in a game
+	GamePool   chan *Game         // Current waiting games (only one player)
+	PlayerPool chan *Player       // Players who are waiting for a game
 }
 
 func NewLobby() *Lobby {
 	return &Lobby{
 		Games:      make(map[string]*Game),
+		Players:    make(map[string]*Player),
 		GamePool:   make(chan *Game),
 		PlayerPool: make(chan *Player),
 	}
 }
 
-// JoinGame handles the match making for online games
-// JoinGame will create a game if none are available
-func (l *Lobby) JoinGame(r *http.Request) {
-
+func (l *Lobby) GetPlayer(playerID string) *Player {
+	return l.Players[playerID]
 }
 
-func (l *Lobby) getGame(id string) (*Game, bool) {
-	game, ok := l.Games[id]
-	return game, ok
+func (l *Lobby) GetGame(id string) *Game {
+	return l.Games[id]
 }
 
 func (l *Lobby) addGame(game *Game) {
