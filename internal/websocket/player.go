@@ -75,7 +75,7 @@ func (p *Player) write() {
 
 // read message from the websocket and notify the Game
 func (p *Player) read() {
-    p.WaitForGame()
+    <-p.InGame
 	for {
 		_, message, err := p.Conn.ReadMessage()
 		if err != nil {
