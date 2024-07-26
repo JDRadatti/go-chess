@@ -56,14 +56,13 @@ func (l *Lobby) findGame(p *Player) {
 		l.addGame(game)
 	}
 	p.Game = game
+    close(p.InGame)
 }
 
 func (l *Lobby) Run() {
 	for {
-        log.Println("lobby")
 		select {
 		case player := <-l.PlayerPool:
-			// Player is waiting
 			l.findGame(player)
 		}
 	}
