@@ -17,6 +17,9 @@ func ServeWebSocket(w http.ResponseWriter, r *http.Request, l *Lobby, gameID str
 		log.Println(err)
 		return
 	}
+    // check for client id
+    // if player id valid, send current game or add to pool
+    // if no player id, create new player and add to pool
 
     player := NewPlayer(l, conn)
     l.PlayerPool <-player
