@@ -60,6 +60,8 @@ func (p *Player) WaitForGame() {
 }
 
 // write message from the Game to the websocket
+// All writes to websocket MUST be in this function to avoid
+// concurrent write errors
 func (p *Player) write() {
 	p.WaitForGame()
 	for {
@@ -74,6 +76,8 @@ func (p *Player) write() {
 }
 
 // read message from the websocket and notify the Game
+// All reads from websocket MUST be in this function to avoid
+// concurrent read errors
 func (p *Player) read() {
 	<-p.InGame
 	for {
