@@ -1,5 +1,14 @@
 package websocket
 
+import (
+    "time"
+)
+// MoveRequest is sent from client to request a move
+type ConnectRequest struct {
+	PlayerID string
+	Time     time.Time
+}
+
 // MoveRequest is sent from client to request a move
 type MoveRequest struct {
 	PlayerID string
