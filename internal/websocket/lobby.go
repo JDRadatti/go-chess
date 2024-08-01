@@ -41,7 +41,8 @@ func (l *Lobby) addGame(game *Game) {
 // TODO add elo, color, and game mode match making
 func (l *Lobby) findGame(p *Player) {
 	if p.Game != nil {
-		log.Printf("already in game %s", p.Game.ID)
+		close(p.InGame)
+		return // player already in game,
 	}
 
 	var game *Game
