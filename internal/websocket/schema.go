@@ -33,6 +33,7 @@ type GameRequest struct {
 type GameAccepted struct {
 	PlayerID string
 	GameID   string
+	Color    int
 }
 
 // GameError is sent from the client when joining a game fails

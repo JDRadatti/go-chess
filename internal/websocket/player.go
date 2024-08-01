@@ -47,6 +47,7 @@ func (p *Player) WaitForGame() {
 	payload := GameAccepted{
 		PlayerID: p.ID,
 		GameID:   p.Game.ID,
+        Color: p.Game.ColorFromPID(p.ID),
 	}
 
 	marshled, err := json.Marshal(payload)
