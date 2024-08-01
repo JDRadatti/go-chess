@@ -2,12 +2,24 @@
 import GameBoard from '../components/GameBoard.vue'
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
+import axios from 'axios'
 
 const move = ref("")
 const gameID = ref("")
 const playerID = ref("")
+const color = ref("")
 var connected = false
 const route = useRoute()
+
+playerID.value = localStorage.getItem("playerID")
+if (playerID.value == null) {
+    axios.post("/token").then(response => {
+        playerID.value = response.data
+        localStorage.setItem("playerID", playerID.value)
+    }).catch(err => {
+        console.log("error", err)
+    })
+}
 
 if (window["WebSocket"]) {
     var conn = new WebSocket("ws://" + document.location.host + "/game/" + route.params.id);
@@ -21,13 +33,19 @@ if (window["WebSocket"]) {
         for (var i = 0; i < messages.length; i++) {
             var message = messages[i];
             var parsed = JSON.parse(message)
-            playerID.value = parsed["PlayerID"];
+            color.value = parsed["Color"];
             gameID.value = parsed["GameID"];
+            playerID.value = parsed["PlayerID"];
         }
     };
 
     conn.onopen = function (event) {
         connected = true
+        const msg = {
+            PlayerID: playerID.value,
+            date: Date.now(),
+        };
+        conn.send(JSON.stringify(msg));
     }
 
 
@@ -60,8 +78,8 @@ function sendMove() {
         </form>
         <button @click="sendMove">Send</button>
         <p>Previous move: {{ move }}</p>
-        <p>PlayerID: {{ gameID }}</p>
-        <p>GameID: {{ playerID }}</p>
+        <p>PlayerID: {{ playerID }}</p>
+        <p>GameID: {{ gameID }}</p>
     </main>
 </template>
 
