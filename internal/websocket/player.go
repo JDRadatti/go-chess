@@ -22,13 +22,7 @@ var (
 )
 
 func NewPlayer(l *Lobby, conn *websocket.Conn) *Player {
-	playerID, err := uuid.NewRandom()
-	if err != nil {
-		panic(err)
-	}
-
 	return &Player{
-		ID:     playerID.String()[:8],
 		Lobby:  l,
 		Conn:   conn,
 		Move:   make(chan string),
@@ -36,18 +30,14 @@ func NewPlayer(l *Lobby, conn *websocket.Conn) *Player {
 	}
 }
 
-func (p *Player) AddConn(conn *websocket.Conn) {
-	p.Conn = conn
-}
-
 // wait for match making to add player to a game
 func (p *Player) WaitForGame() {
 	<-p.InGame // Wait until matchmaking finishes
 
 	payload := GameAccepted{
-		PlayerID: p.ID,
 		GameID:   p.Game.ID,
-        Color: p.Game.ColorFromPID(p.ID),
+		PlayerID: p.ID,
+		Color:    p.Game.ColorFromPID(p.ID),
 	}
 
 	marshled, err := json.Marshal(payload)
@@ -79,8 +69,33 @@ func (p *Player) write() {
 // read message from the websocket and notify the Game
 // All reads from websocket MUST be in this function to avoid
 // concurrent read errors
-func (p *Player) read() {
-	<-p.InGame
+func (p *Player) read(l *Lobby) {
+
+	// First message must be the playerID
+	_, message, err := p.Conn.ReadMessage()
+	if err != nil {
+		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			log.Printf("error: %v", err)
+		}
+		return
+	}
+
+	var c ConnectRequest
+	err = json.Unmarshal(message, &c)
+	if err != nil {
+		log.Printf("error: %v", err)
+	}
+
+	if err := uuid.Validate(c.PlayerID); err != nil {
+		log.Printf("error: %v", err)
+	}
+	p.ID = c.PlayerID
+
+	l.PlayerPool <- p // Request game from lobby
+	<-p.InGame        // Wait for lobby to close, indicating game found
+
+	// From now on, every move must contain a valid playerID
+	// Handle move requests
 	for {
 		_, message, err := p.Conn.ReadMessage()
 		if err != nil {
@@ -90,13 +105,17 @@ func (p *Player) read() {
 			break
 		}
 
-        var payload *MoveRequest = &MoveRequest{}
-        log.Println(string(message))
+		var payload *MoveRequest = &MoveRequest{}
+		log.Println(string(message))
 		err = json.Unmarshal(message, payload)
 		if err != nil {
 			log.Printf("error: %v", err)
 		}
-        log.Println(*payload)
-        p.Game.Moves <- payload
+		log.Println(*payload)
+		if p.ID != payload.PlayerID {
+			log.Printf("error: %v", err)
+			continue // Soft handle invalid ids
+		}
+		p.Game.Moves <- payload
 	}
 }
