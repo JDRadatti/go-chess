@@ -22,14 +22,12 @@ func ServeWebSocket(w http.ResponseWriter, r *http.Request, l *Lobby, gameID str
     // if no player id, create new player and add to pool
 
     player := NewPlayer(l, conn)
-    l.PlayerPool <-player
-    if player.Game != nil {
-        // Player already in game, check gameIDs match
-        // check client id's match
-        // send redirect to the current url
-        log.Printf("player %s already in game %s but requested %s", player.ID, player.Game.ID, gameID)
-    }
-
+    //if player.Game != nil {
+    //    // Player already in game, check gameIDs match
+    //    // check client id's match
+    //    // send redirect to the current url
+    //    log.Printf("player %s already in game %s but requested %s", player.ID, player.Game.ID, gameID)
+    //}
 	go player.write()
-	go player.read()
+	go player.read(l)
 }
