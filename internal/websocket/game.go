@@ -41,9 +41,9 @@ func newGame() *Game {
 
 func (g *Game) addPlayer(p *Player) error {
 	if g.White == nil {
-		g.Black = p
-	} else if g.Black == nil {
 		g.White = p
+	} else if g.Black == nil {
+		g.Black = p
 	} else {
 		return errors.New("game full")
 	}
