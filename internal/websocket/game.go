@@ -12,7 +12,7 @@ type Game struct {
 	ID    string
 	White *Player
 	Black *Player
-	Moves chan *MoveRequest // Moves requests sent from both white and black
+	Moves chan string // Moves requests sent from both white and black
 	Start chan struct{}
 }
 
@@ -31,7 +31,7 @@ func newGame() *Game {
 
 	newGame := &Game{
 		ID:    gameID.String()[:8],
-		Moves: make(chan *MoveRequest),
+		Moves: make(chan string),
 		Start: make(chan struct{}),
 	}
 	go newGame.play()
@@ -54,12 +54,12 @@ func (g *Game) addPlayer(p *Player) error {
 
 func (g *Game) ColorFromPID(pid string) int {
 	if g.White != nil && g.White.ID == pid {
-        return WHITE
+		return WHITE
 	} else if g.Black != nil && g.Black.ID == pid {
-        return BLACK
+		return BLACK
 	} else {
 		log.Printf("Player ID not found %s", pid)
-        return ERROR
+		return ERROR
 	}
 }
 
