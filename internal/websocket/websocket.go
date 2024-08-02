@@ -1,10 +1,37 @@
 package websocket
 
 import (
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+    "time"
 )
+
+type Action string
+
+const (
+	JOIN Action = "join"
+	MOVE Action = "move"
+)
+
+type Inbound struct {
+	Action Action
+    Move string
+    PlayerID string
+    GameID string
+    Time time.Duration
+    Color int
+}
+
+type Outbound struct {
+	Action Action
+    Move string
+    PlayerID string
+    GameID string
+    Time time.Duration
+    Color int
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -28,16 +55,24 @@ func ServeWebSocket(w http.ResponseWriter, r *http.Request, l *Lobby, gameID str
 		return
 	}
 
-	log.Println("message: ", string(message))
+    in := &Inbound{}
+	err = json.Unmarshal(message, in)
+	if err != nil {
+		log.Printf("error: %v", err)
+        conn.Close()
+        return
+	}
+    if in.Action != JOIN {
+        log.Printf("action must be join")
+        conn.Close()
+        return
+    }
 
-	if player, ok := l.GetPlayer(string(message)); ok {
+	if player, ok := l.GetPlayer(in.PlayerID); ok {
+        player.Conn = conn
 		go player.write()
 		go player.read()
-    }
-    //if player.Game != nil {
-	//    // Player already in game, check gameIDs match
-	//    // check client id's match
-	//    // send redirect to the current url
-	//    log.Printf("player %s already in game %s but requested %s", player.ID, player.Game.ID, gameID)
-	//}
+	} else {
+		log.Println("unregistered player. must make post request to /play before joining websocket")
+	}
 }
