@@ -12,14 +12,6 @@ var connected = false
 const route = useRoute()
 
 playerID.value = localStorage.getItem("playerID")
-if (playerID.value == null) {
-    axios.post("/token").then(response => {
-        playerID.value = response.data
-        localStorage.setItem("playerID", playerID.value)
-    }).catch(err => {
-        console.log("error", err)
-    })
-}
 
 if (window["WebSocket"]) {
     var conn = new WebSocket("ws://" + document.location.host + "/game/" + route.params.id);
@@ -40,6 +32,7 @@ if (window["WebSocket"]) {
     };
 
     conn.onopen = function (event) {
+        // Request game and join
         connected = true
         const msg = {
             PlayerID: playerID.value,
