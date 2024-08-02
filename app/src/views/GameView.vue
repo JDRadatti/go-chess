@@ -19,15 +19,23 @@ if (window["WebSocket"]) {
         var item = document.createElement("div");
         item.innerHTML = "<b>Connection closed.</b>";
         connected = false
+        console.log("CLOSED")
+    };
+
+    conn.error = function (event) {
+        var item = document.createElement("div");
+        item.innerHTML = "<b>ERROR</b>";
+        connected = false
+        console.log("ERROR")
     };
     conn.onmessage = function (event) {
         var messages = event.data.split('\n');
         for (var i = 0; i < messages.length; i++) {
             var message = messages[i];
             var parsed = JSON.parse(message)
-            color.value = parsed["Color"];
-            gameID.value = parsed["GameID"];
-            playerID.value = parsed["PlayerID"];
+            color.value = parsed["color"];
+            gameID.value = parsed["gameID"];
+            playerID.value = parsed["playerID"];
         }
     };
 
@@ -35,7 +43,8 @@ if (window["WebSocket"]) {
         // Request game and join
         connected = true
         const msg = {
-            PlayerID: playerID.value,
+            action: "join",
+            playerID: playerID.value,
             date: Date.now(),
         };
         conn.send(JSON.stringify(msg));
@@ -51,13 +60,13 @@ if (window["WebSocket"]) {
 function sendMove() {
     if (connected) {
         const msg = {
+            Action: "move",
             PlayerID: playerID.value,
             GameID: gameID.value,
             Move: move.value,
             date: Date.now(),
         };
         conn.send(JSON.stringify(msg));
-        console.log("message", msg)
     }
 }
 </script>

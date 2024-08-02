@@ -25,15 +25,13 @@ onMounted(() => initialize());
 
 function startGame() {
     axios.post('/play', {
-        PlayerID: playerID.value,
-        Time: time,
-        Increment: increment,
+        playerID: playerID.value,
+        time: time,
+        increment: increment,
     }).then(response => {
-        var parsed = JSON.parse(response.data)
-        console.log("parsecd", parsed)
-        var gameID = parsed["GameID"];
-        var playerID = parsed["PlayerID"];
-        router.push(`/game/${gameID}`)
+        var gameID = response.data["GameID"];
+        var playerID = response.data["PlayerID"];
+        router.push(`/game/${gameID}`);
     }).catch(error => {
         console.log(error)
     })
