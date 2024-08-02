@@ -32,10 +32,8 @@ func HandlePlay(w http.ResponseWriter, r *http.Request, lobby *websocket.Lobby) 
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.Println("gameRequest", gameRequest)
 
 	playerID := gameRequest.PlayerID
-	log.Println("playerID", playerID)
 	if err := uuid.Validate(playerID); err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
