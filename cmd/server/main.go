@@ -19,6 +19,11 @@ func serveHome(lobby *websocket.Lobby) {
 	router.HandleFunc("GET /play/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "app/dist/index.html")
 	})
+
+	router.HandleFunc("POST /token", func(w http.ResponseWriter, r *http.Request) {
+        api.HandleToken(w, r)
+	})
+
 	router.HandleFunc("GET /game/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := r.Header["Upgrade"]; ok {
 			idString := r.PathValue("id")
