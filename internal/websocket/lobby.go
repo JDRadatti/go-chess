@@ -6,9 +6,9 @@ import (
 
 type Lobby struct {
 	Games      map[string]*Game   // Current running games (has both players)
-	Players    map[string]*Player // Current Players in a game
+	Players    map[string]*Player // Current Players in a game.
 	GamePool   chan *Game         // Current waiting games (only one player)
-	PlayerPool chan *Player       // Players who are waiting for a game
+	PlayerPool chan *Player       // Players who are waiting for a game [DEP]
 }
 
 func NewLobby() *Lobby {
@@ -20,49 +20,54 @@ func NewLobby() *Lobby {
 	}
 }
 
-func (l *Lobby) GetPlayer(playerID string) *Player {
-	return l.Players[playerID]
+func (l *Lobby) GetGame(id string) (*Game, bool) {
+	game, ok := l.Games[id]
+	return game, ok
 }
 
-func (l *Lobby) GetGame(id string) *Game {
-	return l.Games[id]
+func (l *Lobby) GetPlayer(id string) (*Player, bool) {
+	player, ok := l.Players[id]
+	return player, ok
 }
 
-func (l *Lobby) addGame(game *Game) {
-	if _, ok := l.Games[game.ID]; ok {
-		panic("cannot add game that aready exists")
+func (l *Lobby) GetOrCreatePlayer(playerID string) *Player {
+	if player, ok := l.GetPlayer(playerID); ok {
+		log.Printf("player already in game %s", playerID)
+		return player
 	}
-	l.Games[game.ID] = game
-}
-
-// findGame handles match making.
-// eventually want better match making but for now
-// it simply matches people based on open games
-// TODO add elo, color, and game mode match making
-func (l *Lobby) findGame(p *Player) {
-	if p.Game != nil {
-		close(p.InGame)
-		return // player already in game,
-	}
-
-	var game *Game
-	if len(l.GamePool) >= 1 {
-		game = <-l.GamePool
-		game.addPlayer(p)
-	} else {
-		game = newGame()
-		game.addPlayer(p)
-		l.addGame(game)
-	}
-	p.Game = game
-	close(p.InGame)
+	player := NewPlayer(l, nil)
+	player.ID = playerID // must be validated before this function
+	l.Players[playerID] = player
+	return player
 }
 
 func (l *Lobby) Run() {
 	for {
 		select {
 		case player := <-l.PlayerPool:
-			l.findGame(player)
+            if player.Game != nil {
+                log.Printf("player %s already in game %s", player.ID, player.Game.ID)
+                continue
+            }
+			// TODO: handle different game options
+			var game *Game
+			if len(l.GamePool) == 0 {
+				game = newGame()
+			} else {
+				game = <-l.GamePool
+			}
+
+			if err := game.addPlayer(player); err != nil {
+				log.Printf("error %v", err)
+				close(player.InGame)
+				continue
+			}
+
+            player.Game = game
+			l.Games[game.ID] = game
+			l.Players[player.ID] = player
+			close(player.InGame)
+			// TODO: make sure to remove gameID and playerID when game ends
 		}
 	}
 }
