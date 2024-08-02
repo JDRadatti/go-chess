@@ -16,11 +16,10 @@ type Game struct {
 	Start chan struct{}
 }
 
-
 const (
-    WHITE int = iota
-    BLACK 
-    ERROR
+	WHITE int = iota
+	BLACK
+	ERROR
 )
 
 func newGame() *Game {
