@@ -31,19 +31,6 @@ type MoveError struct {
 	Err      error
 }
 
-// GameRequest is sent from the client when wanting to join a game
-type GameRequest struct {
-	PlayerID  string
-	Time      int
-	Increment int
-}
-
-// GameAccepted is sent from the client when wanting to join a game
-type GameAccepted struct {
-	PlayerID string
-	GameID   string
-	Color    int
-}
 
 // GameError is sent from the client when joining a game fails
 type GameError struct {
