@@ -59,17 +59,20 @@ func (p *Player) read() {
 			break
 		}
 
-		var payload *MoveRequest = &MoveRequest{}
-		log.Println(string(message))
-		err = json.Unmarshal(message, payload)
+        in := &Inbound{}
+		err = json.Unmarshal(message, in)
 		if err != nil {
 			log.Printf("error: %v", err)
 		}
-		log.Println(*payload)
-		if p.ID != payload.PlayerID {
+		if p.ID != in.PlayerID {
 			log.Printf("error: %v", err)
 			continue // Soft handle invalid ids
 		}
-		p.Game.Moves <- payload
+        switch in.Action {
+        case MOVE:
+		    p.Game.Moves <- in.Move
+        default: 
+            p.Conn.Close()
+        }
 	}
 }
