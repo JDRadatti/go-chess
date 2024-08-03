@@ -4,6 +4,10 @@ import (
 	"log"
 )
 
+var (
+    maxGames = 10 
+)
+
 type Lobby struct {
 	Games      map[string]*Game   // Current running games (has both players)
 	Players    map[string]*Player // Current Players in a game.
@@ -15,7 +19,7 @@ func NewLobby() *Lobby {
 	return &Lobby{
 		Games:      make(map[string]*Game),
 		Players:    make(map[string]*Player),
-		GamePool:   make(chan *Game),
+		GamePool:   make(chan *Game, maxGames),
 		PlayerPool: make(chan *Player),
 	}
 }
@@ -45,16 +49,22 @@ func (l *Lobby) Run() {
 	for {
 		select {
 		case player := <-l.PlayerPool:
-            if player.Game != nil {
-                log.Printf("player %s already in game %s", player.ID, player.Game.ID)
-                continue
-            }
+			if player.Game != nil {
+				log.Printf("player %s already in game %s", player.ID, player.Game.ID)
+				continue
+			}
 			// TODO: handle different game options
 			var game *Game
-			if len(l.GamePool) == 0 {
+			select {
+			case g, ok := <-l.GamePool:
+				if ok {
+					game = g
+				} else {
+					panic("GamePool channel closed")
+				}
+			default:
 				game = newGame()
-			} else {
-				game = <-l.GamePool
+                l.GamePool <- game
 			}
 
 			if err := game.addPlayer(player); err != nil {
@@ -63,9 +73,8 @@ func (l *Lobby) Run() {
 				continue
 			}
 
-            player.Game = game
+			player.Game = game
 			l.Games[game.ID] = game
-			l.Players[player.ID] = player
 			close(player.InGame)
 			// TODO: make sure to remove gameID and playerID when game ends
 		}
