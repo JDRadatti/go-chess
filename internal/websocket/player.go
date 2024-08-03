@@ -33,6 +33,7 @@ func NewPlayer(l *Lobby, conn *websocket.Conn) *Player {
 // All writes to websocket MUST be in this function to avoid
 // concurrent write errors
 func (p *Player) write() {
+	<-p.Game.Start // wait for game to start
 	for {
 		select {
 		case out := <-p.Move:
@@ -53,6 +54,7 @@ func (p *Player) write() {
 // All reads from websocket MUST be in this function to avoid
 // concurrent read errors
 func (p *Player) read() {
+	<-p.Game.Start // wait for game to start
 	// From now on, every move must contain a valid playerID
 	// Handle move requests
 	for {
