@@ -11,7 +11,7 @@ type Player struct {
 	Game   *Game
 	Lobby  *Lobby
 	Conn   *websocket.Conn
-	Move   chan string
+	Move   chan *Outbound
 	InGame chan struct{}
 }
 
@@ -24,7 +24,7 @@ func NewPlayer(l *Lobby, conn *websocket.Conn) *Player {
 	return &Player{
 		Lobby:  l,
 		Conn:   conn,
-		Move:   make(chan string),
+		Move:   make(chan *Outbound),
 		InGame: make(chan struct{}),
 	}
 }
@@ -35,7 +35,12 @@ func NewPlayer(l *Lobby, conn *websocket.Conn) *Player {
 func (p *Player) write() {
 	for {
 		select {
-		case message := <-p.Move:
+		case out := <-p.Move:
+			message, err := json.Marshal(out)
+			if err != nil {
+				log.Printf("error: %v", err)
+				return
+			}
 			if err := p.Conn.WriteMessage(messageType, []byte(message)); err != nil {
 				log.Printf("error: %v", err)
 				return
@@ -68,11 +73,11 @@ func (p *Player) read() {
 			log.Println("invalid player id", p.ID, in.PlayerID)
 			continue // Soft handle invalid ids
 		}
-        switch in.Action {
-        case MOVE:
-		    p.Game.Moves <- in.Move
-        default: 
-            p.Conn.Close()
-        }
+		switch in.Action {
+		case MOVE:
+			p.Game.Moves <- in
+		default:
+			p.Conn.Close()
+		}
 	}
 }
