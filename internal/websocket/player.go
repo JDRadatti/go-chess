@@ -59,13 +59,13 @@ func (p *Player) read() {
 			break
 		}
 
-        in := &Inbound{}
+		in := &Inbound{}
 		err = json.Unmarshal(message, in)
 		if err != nil {
 			log.Printf("error: %v", err)
 		}
 		if p.ID != in.PlayerID {
-			log.Printf("error: %v", err)
+			log.Println("invalid player id", p.ID, in.PlayerID)
 			continue // Soft handle invalid ids
 		}
         switch in.Action {
