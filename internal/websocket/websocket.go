@@ -15,22 +15,32 @@ const (
 	MOVE Action = "move"
 )
 
+const (
+	JOIN_SUCCESS = "join success"
+)
+
 type Inbound struct {
-	Action Action
-    Move string
-    PlayerID string
-    GameID string
-    Time time.Duration
-    Color int
+	Action   Action
+	Move     string
+	PlayerID string
+	GameID   string
+	Time     time.Duration
+	Color    int
 }
 
 type Outbound struct {
-	Action Action
-    Move string
-    PlayerID string
-    GameID string
-    Time time.Duration
-    Color int
+	Action   Action
+	Move     string
+	PlayerID string
+	GameID   string
+	Time     time.Duration
+	Color    int
+	Message  string
+}
+
+type WSHandler struct {
+	Lobby  *Lobby
+	GameID string
 }
 
 var upgrader = websocket.Upgrader{
@@ -38,12 +48,22 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func ServeWebSocket(w http.ResponseWriter, r *http.Request, l *Lobby, gameID string) {
+func (ws *WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
+
+	if player, ok := ws.handshake(conn); ok {
+		go player.write()
+		go player.read()
+	} else {
+		log.Println("unregistered player. must make post request to /play before joining websocket")
+	}
+}
+
+func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 
 	// Get player from lobby using PlayerID sent from client.
 	// Client MUST send the playerID on connect

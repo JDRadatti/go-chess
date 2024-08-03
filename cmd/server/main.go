@@ -21,13 +21,17 @@ func serveHome(lobby *websocket.Lobby) {
 	})
 
 	router.HandleFunc("POST /token", func(w http.ResponseWriter, r *http.Request) {
-        api.HandleToken(w, r)
+		api.HandleToken(w, r)
 	})
 
 	router.HandleFunc("GET /game/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := r.Header["Upgrade"]; ok {
 			idString := r.PathValue("id")
-			websocket.ServeWebSocket(w, r, lobby, idString)
+			wsHandler := &websocket.WSHandler{
+				Lobby:  lobby,
+				GameID: idString,
+			}
+			wsHandler.ServeHTTP(w, r)
 		} else {
 			http.ServeFile(w, r, "app/dist/index.html")
 		}
