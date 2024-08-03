@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
-    "time"
+	"time"
 )
 
 type Action string
@@ -72,27 +72,51 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 			log.Printf("error: %v", err)
 		}
-		return
+		return nil, false
 	}
 
-    in := &Inbound{}
+	in := &Inbound{}
 	err = json.Unmarshal(message, in)
 	if err != nil {
 		log.Printf("error: %v", err)
-        conn.Close()
-        return
+		conn.Close()
+		return nil, false
 	}
-    if in.Action != JOIN {
-        log.Printf("action must be join")
-        conn.Close()
-        return
-    }
+	if in.Action != JOIN {
+		log.Printf("action must be join")
+		conn.Close()
+		return nil, false
+	}
 
-	if player, ok := l.GetPlayer(in.PlayerID); ok {
-        player.Conn = conn
-		go player.write()
-		go player.read()
-	} else {
-		log.Println("unregistered player. must make post request to /play before joining websocket")
+	player, ok := ws.Lobby.GetPlayer(in.PlayerID)
+	if !ok {
+		return nil, false
 	}
+
+	if player.Game.ID != ws.GameID {
+		log.Println("invalid game id")
+		conn.Close()
+		return nil, false
+	}
+
+	// Send join success
+	joinSuccess := &Outbound{
+		Action:   JOIN_SUCCESS,
+		PlayerID: player.ID,
+		GameID:   player.Game.ID,
+	}
+	message, err = json.Marshal(joinSuccess)
+	if err != nil {
+		log.Println("server error")
+		conn.Close()
+		return nil, false
+	}
+
+	if err := conn.WriteMessage(messageType, []byte(message)); err != nil {
+		log.Printf("error: %v", err)
+		return nil, false
+	}
+
+	player.Conn = conn
+	return player, true
 }
