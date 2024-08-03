@@ -82,7 +82,33 @@ func (g *Game) play() {
 			// check game id
 			// check if valid player move
 			// call gamelogic module to check for valid gamelogic
-			log.Println(moveRequest)
+			pid := moveRequest.PlayerID
+			switch pid {
+			case g.White.ID:
+				if len(g.AllMoves)%2 != 0 { // white moves on evens
+                    continue // skip moves out of order
+				} 
+			case g.Black.ID:
+				if len(g.AllMoves)%2 != 1 { // black moves on odds
+                    continue // skip moves out of order
+				}
+			default:
+				log.Println("invalid playerID")
+				return
+			}
+
+			// right now, just relay move to both players
+			out := &Outbound{
+				Action:   MOVE,
+                Move: moveRequest.Move,
+				PlayerID: pid, // Player who made the move
+				GameID:   g.ID,
+			}
+            g.AllMoves = append(g.AllMoves, out.Move)
+			g.White.Move <- out
+			g.Black.Move <- out
+		default:
+			continue
 		}
 	}
 }
