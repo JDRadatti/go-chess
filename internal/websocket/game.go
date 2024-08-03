@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"log"
 )
@@ -9,11 +10,12 @@ import (
 type State int8
 
 type Game struct {
-	ID    string
-	White *Player
-	Black *Player
-	Moves chan string // Moves requests sent from both white and black
-	Start chan struct{}
+	ID       string
+	White    *Player
+	Black    *Player
+	Moves    chan *Inbound // Moves requests sent from both white and black
+	AllMoves []string
+	Start    chan struct{}
 }
 
 const (
@@ -30,9 +32,10 @@ func newGame() *Game {
 	}
 
 	newGame := &Game{
-		ID:    gameID.String()[:8],
-		Moves: make(chan string),
-		Start: make(chan struct{}),
+		ID:       gameID.String()[:8],
+		Moves:    make(chan *Inbound),
+		Start:    make(chan struct{}),
+		AllMoves: []string{},
 	}
 	go newGame.play()
 	return newGame
@@ -61,6 +64,11 @@ func (g *Game) ColorFromPID(pid string) int {
 		log.Printf("Player ID not found %s", pid)
 		return ERROR
 	}
+}
+
+func (g *Game) String() string {
+	return fmt.Sprintf("white: %s, black %s \n moves: %v",
+		g.White.ID, g.Black.ID, g.AllMoves)
 }
 
 func (g *Game) play() {
