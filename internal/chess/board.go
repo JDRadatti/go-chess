@@ -60,13 +60,13 @@ func (b *Board) Move(start Square, dest Square) bool {
 	}
 
 	// Update state
-	start.piece, dest.piece = nil, start.piece
 	switch start.piece.symbol {
 	case 'k':
 		b.whiteKing = &dest
 	case 'K':
 		b.blackKing = &dest
 	}
+	start.piece, dest.piece = nil, start.piece
 	return true
 }
 
