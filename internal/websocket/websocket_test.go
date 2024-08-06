@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
