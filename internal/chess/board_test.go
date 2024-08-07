@@ -179,9 +179,9 @@ func TestMoves(t *testing.T) {
 				'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
 				'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
 			},
-			startSquares: []int{51, 11, 58, 2, 52, 12, 61, 5, 60, 0, 57, 3, 48, 4},
-			destSquares:  []int{35, 27, 37, 29, 44, 20, 43, 19, 63, 17, 42, 11, 40, 0},
-			expected:     []bool{true, true, true, true, true, true, true, true, true, true, true, true, true, true},
+			startSquares: []int{51, 11, 58, 2, 52, 12, 61, 5, 62, 15, 60, 1, 57, 3, 48, 4},
+			destSquares:  []int{35, 27, 37, 29, 44, 20, 43, 19, 47, 23, 63, 16, 42, 11, 40, 0},
+			expected:     []bool{true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
 		},
 	}
 
