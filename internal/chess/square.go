@@ -2,7 +2,7 @@ package chess
 
 type Square struct {
 	index int
-	moved int8
+	moved bool
 	piece *Piece
 }
 
@@ -19,11 +19,11 @@ func (s *Square) empty() bool {
 }
 
 func (s *Square) hasMoved() bool {
-	return s.moved == 1
+	return s.moved
 }
 
 func (s *Square) markMoved() {
-	s.moved = 1
+	s.moved = true
 }
 
 // samePlayer returns true iff both squares have a piece that are
