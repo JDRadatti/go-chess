@@ -102,7 +102,7 @@ func TestValidMoves(t *testing.T) {
 			turn:         []Player{BLACK, BLACK, BLACK, WHITE, WHITE},
 		},
 		{
-			name: "basic bishop movement",
+			name: "basic queen movement",
 			board: []byte{
 				'R', 'N', 'B', ' ', 'K', 'B', 'N', 'R',
 				'P', 'P', 'P', ' ', 'P', 'P', 'P', 'P',
@@ -147,7 +147,7 @@ func TestValidMoves(t *testing.T) {
 				start := board.squares[startI]
 				dest := board.squares[input.destSquares[i]]
 				board.turn = input.turn[i]
-				assert.Equal(t, input.expected[i], board.ValidMove(start, dest),
+				assert.Equal(t, input.expected[i], board.validMove(start, dest),
 					fmt.Sprintf("test %d, subtest %d", j, i))
 			}
 

@@ -26,7 +26,7 @@ const (
 //	1  56  57  58  59  60  61  62  63
 //	   a   b   c   d   e   f   g   h
 type Board struct {
-	squares   [NUM_SQUARES]Square
+	squares   [NUM_SQUARES]*Square
 	turn      Player // 0 for white, 1 for black
 	whiteKing *Square
 	blackKing *Square
@@ -39,8 +39,8 @@ func NewBoardClassic() Board {
 		turn:    WHITE,
 	}
 
-	board.whiteKing = &board.squares[60]
-	board.blackKing = &board.squares[4]
+	board.whiteKing = board.squares[60]
+	board.blackKing = board.squares[4]
 	return board
 }
 
@@ -56,9 +56,9 @@ func NewBoardFrom(b []byte) Board {
 		}
 		switch s.piece.symbol {
 		case 'k':
-			board.whiteKing = &board.squares[i]
+			board.whiteKing = board.squares[i]
 		case 'K':
-			board.blackKing = &board.squares[i]
+			board.blackKing = board.squares[i]
 		}
 	}
 	return board
@@ -66,7 +66,7 @@ func NewBoardFrom(b []byte) Board {
 
 // Move executes a move from start to dest, if valid and updates
 // necessary state.
-func (b *Board) Move(start Square, dest Square) bool {
+func (b *Board) Move(start *Square, dest *Square) bool {
 	if !b.validMove(start, dest) {
 		return false
 	}
@@ -74,9 +74,9 @@ func (b *Board) Move(start Square, dest Square) bool {
 	// Update state
 	switch start.piece.symbol {
 	case 'k':
-		b.whiteKing = &dest
+		b.whiteKing = dest
 	case 'K':
-		b.blackKing = &dest
+		b.blackKing = dest
 	}
 	start.piece, dest.piece = nil, start.piece
 	return true
@@ -107,7 +107,7 @@ func (b *Board) Move(start Square, dest Square) bool {
 //   - The en passant capture must be performed on the turn immediately after the pawn being captured moves. If the player does not capture en passant on that turn, they no longer can do it later.
 //
 // 6. Pawns can upgrade when reaching the other side
-func (b *Board) validMove(start Square, dest Square) bool {
+func (b *Board) validMove(start *Square, dest *Square) bool {
 
 	if b.gameOver || start.empty() || start.piece.player != b.turn {
 		return false
@@ -137,8 +137,6 @@ func (b *Board) validMove(start Square, dest Square) bool {
 			return false
 		}
 	}
-
-	start.piece, dest.piece = nil, start.piece
 	return true
 }
 
@@ -146,7 +144,7 @@ func (b *Board) validMove(start Square, dest Square) bool {
 // 1. possible based on the piece in start square
 // 2. there are no pieces between start and dest
 // 3. dest is either empty or contains an opponent piece
-func (b *Board) clearMove(start Square, dest Square) bool {
+func (b *Board) clearMove(start *Square, dest *Square) bool {
 	dir, steps := move(start, dest)
 	if dir == INVALID || steps > start.piece.maxSteps {
 		return false
@@ -161,7 +159,7 @@ func (b *Board) clearMove(start Square, dest Square) bool {
 		}
 		currSquare := b.squares[currIndex]
 		if !currSquare.empty() && steps > 1 ||
-			currSquare.samePlayer(&start) && steps == 1 {
+			currSquare.samePlayer(start) && steps == 1 {
 			return false
 		}
 	}
@@ -172,7 +170,7 @@ func (b *Board) clearMove(start Square, dest Square) bool {
 // an opponent piece. Uses current player's turn to check for opponent.
 // A square is attacked by an opponent piece if the opponent piece
 // can CAPTURE a piece on that square if it were their turn.
-func (b *Board) attacked(square Square) bool {
+func (b *Board) attacked(square *Square) bool {
 	for _, s := range b.squares {
 		if s.index == square.index || s.empty() {
 			continue

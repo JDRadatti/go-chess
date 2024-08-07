@@ -41,7 +41,7 @@ const (
 //	2 +14 +15 +16 +17 +18 +19 +20 +21
 //	1
 //	   a   b   c   d   e   f   g   h
-func move(start Square, dest Square) (int, int) {
+func move(start *Square, dest *Square) (int, int) {
 	startFile := start.file()
 	destFile := dest.file()
 	startRank := start.rank()
