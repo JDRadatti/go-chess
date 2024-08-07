@@ -187,6 +187,24 @@ func (b *Board) attacked(square *Square) bool {
 	return false
 }
 
+func (b *Board) String() string {
+	builder := ""
+	counter := 0
+	for _, square := range b.squares {
+		if counter%8 == 0 {
+			builder += "\n"
+		}
+
+		if square.empty() {
+			builder += "_ "
+		} else {
+			builder += string(square.piece.symbol) + " "
+		}
+		counter++
+	}
+	return builder
+}
+
 func (b *Board) turn() Player {
 	return Player(b.turns % 2)
 }
