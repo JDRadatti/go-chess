@@ -45,10 +45,10 @@ func TestValidMoves(t *testing.T) {
 				'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
 				'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
 			},
-			startSquares: []int{48, 48, 48, 8, 8},
-			destSquares:  []int{40, 41, 39, 16, 0}, // 39 tests edge case (literally)
-			expected:     []bool{true, false, false, true, false},
-			turn:         []Player{WHITE, WHITE, WHITE, BLACK, BLACK},
+			startSquares: []int{48, 48, 48, 8, 8, 8, 8},
+			destSquares:  []int{40, 41, 39, 16, 0, 24, 26}, // 39 tests edge case (literally)
+			expected:     []bool{true, false, false, true, false, true, false},
+			turn:         []Player{WHITE, WHITE, WHITE, BLACK, BLACK, BLACK, BLACK},
 		},
 		{
 			name: "basic knight movement",
