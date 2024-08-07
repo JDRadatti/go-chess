@@ -146,7 +146,7 @@ func TestValidMoves(t *testing.T) {
 			for i, startI := range input.startSquares {
 				start := board.squares[startI]
 				dest := board.squares[input.destSquares[i]]
-				board.turn = input.turn[i]
+				board.turns = int(input.turn[i])
 				assert.Equal(t, input.expected[i], board.validMove(start, dest),
 					fmt.Sprintf("test %d, subtest %d", j, i))
 			}

@@ -27,7 +27,7 @@ const (
 //	   a   b   c   d   e   f   g   h
 type Board struct {
 	squares   [NUM_SQUARES]*Square
-	turn      Player // 0 for white, 1 for black
+	turns     int
 	whiteKing *Square
 	blackKing *Square
 	gameOver  bool
@@ -36,7 +36,6 @@ type Board struct {
 func NewBoardClassic() Board {
 	board := Board{
 		squares: InitSquaresClassic(),
-		turn:    WHITE,
 	}
 
 	board.whiteKing = board.squares[60]
@@ -48,7 +47,6 @@ func NewBoardClassic() Board {
 func NewBoardFrom(b []byte) Board {
 	board := Board{
 		squares: InitSquaresFrom(b),
-		turn:    WHITE,
 	}
 	for i, s := range board.squares {
 		if s.empty() {
@@ -79,6 +77,7 @@ func (b *Board) Move(start *Square, dest *Square) bool {
 		b.blackKing = dest
 	}
 	start.piece, dest.piece = nil, start.piece
+	b.turns++
 	return true
 }
 
@@ -109,7 +108,7 @@ func (b *Board) Move(start *Square, dest *Square) bool {
 // 6. Pawns can upgrade when reaching the other side
 func (b *Board) validMove(start *Square, dest *Square) bool {
 
-	if b.gameOver || start.empty() || start.piece.player != b.turn {
+	if b.gameOver || start.empty() || start.piece.player != b.turn() {
 		return false
 	}
 	// check if in check
@@ -179,11 +178,15 @@ func (b *Board) attacked(square *Square) bool {
 		if s.piece.symbol == 'K' || s.piece.symbol == 'k' {
 			continue
 		}
-		if b.turn != s.piece.player { // opponent piece
+		if b.turn() != s.piece.player { // opponent piece
 			if b.clearMove(s, square) {
 				return true
 			}
 		}
 	}
 	return false
+}
+
+func (b *Board) turn() Player {
+	return Player(b.turns % 2)
 }
