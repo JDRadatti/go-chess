@@ -213,6 +213,22 @@ func (b *Board) String() string {
 func (b *Board) turn() Player {
 	return Player(b.turns % 2)
 }
+
+// inCheck returns true iff the current player is in check.
+func (b *Board) inCheck() bool {
+	switch b.turn() {
+	case WHITE:
+		if b.attacked(b.whiteKing) {
+			return true
+		}
+	case BLACK:
+		if b.attacked(b.blackKing) {
+			return true
+		}
+	}
+	return false
+}
+
 // castle returns true iff the move from start to dest is a valid castle move
 // castle UPDATES STATE
 // Castling rules:

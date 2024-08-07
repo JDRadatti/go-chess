@@ -202,3 +202,113 @@ func TestMoves(t *testing.T) {
 
 	}
 }
+
+func TestCheck(t *testing.T) {
+	inputs := []struct {
+		name     string
+		board    []byte
+		player   Player // the player to check if in check
+		expected bool   // whether the given board is a check for player
+	}{
+		{
+			name: "basic check on white king with queen",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'Q', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			player:   WHITE,
+			expected: true,
+		},
+		{
+			name: "basic check on black king with queen",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'q', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			player:   BLACK,
+			expected: true,
+		},
+		{
+			name: "basic game position without check",
+			board: []byte{
+				'R', 'N', ' ', 'Q', 'K', ' ', 'N', 'R',
+				'P', 'P', 'P', ' ', ' ', 'P', 'P', ' ',
+				' ', ' ', ' ', 'B', 'P', ' ', ' ', 'P',
+				' ', ' ', ' ', 'P', ' ', 'B', ' ', ' ',
+				' ', ' ', ' ', 'p', ' ', 'b', ' ', ' ',
+				' ', ' ', ' ', 'b', 'p', ' ', ' ', 'n',
+				'p', 'p', 'p', ' ', ' ', 'p', 'p', 'p',
+				'r', 'n', ' ', 'q', 'k', ' ', ' ', 'r',
+			},
+			player:   WHITE,
+			expected: false,
+		},
+		{
+			name: "check blocked opponent piece",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', 'Q', ' ',
+				' ', ' ', ' ', ' ', ' ', 'N', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			player:   WHITE,
+			expected: false,
+		},
+		{
+			name: "revealed check",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'N', ' ', 'Q', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			player:   WHITE,
+			expected: true,
+		},
+		{
+			name: "pawn check",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', ' ',
+				' ', ' ', ' ', 'p', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			player:   BLACK,
+			expected: true,
+		},
+	}
+
+	for j, input := range inputs {
+		t.Run(input.name, func(t *testing.T) {
+			board := NewBoardFrom(input.board)
+			board.turns = int(input.player)
+			assert.Equal(t, input.expected, board.inCheck(),
+				fmt.Sprintf("test %d", j))
+		})
+
+	}
+}
