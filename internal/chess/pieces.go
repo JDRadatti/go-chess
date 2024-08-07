@@ -19,19 +19,33 @@ func (p *Piece) validDirection(dir int) bool {
 	return false
 }
 
+const KW byte = 'k'
+const KB byte = 'K'
+const QW byte = 'q'
+const QB byte = 'Q'
+const RW byte = 'r'
+const RB byte = 'R'
+const BW byte = 'b'
+const BB byte = 'B'
+const NW byte = 'n'
+const NB byte = 'N'
+const PW byte = 'p'
+const PB byte = 'P'
+const E byte = ' '
+
 var Pieces map[byte]*Piece = map[byte]*Piece{
-	'k': KingW,
-	'K': KingB,
-	'q': QueenW,
-	'Q': QueenB,
-	'r': RookW,
-	'R': RookB,
-	'b': BishopW,
-	'B': BishopB,
-	'n': KnightW,
-	'N': KnightB,
-	'p': PawnW,
-	'P': PawnB,
+	KW: KingW,
+	KB: KingB,
+	QW: QueenW,
+	QB: QueenB,
+	RW: RookW,
+	RB: RookB,
+	BW: BishopW,
+	BB: BishopB,
+	NW: KnightW,
+	NB: KnightB,
+	PW: PawnW,
+	PB: PawnB,
 }
 
 var KingW = &Piece{
