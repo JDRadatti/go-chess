@@ -160,8 +160,10 @@ func (b *Board) clearMove(start *Square, dest *Square) bool {
 			return false
 		}
 		currSquare := b.squares[currIndex]
-		if !currSquare.empty() && steps > 1 ||
-			currSquare.samePlayer(start) && steps == 1 {
+		if !currSquare.empty() {
+			if !currSquare.samePlayer(start) && i == steps {
+				continue
+			}
 			return false
 		}
 	}
