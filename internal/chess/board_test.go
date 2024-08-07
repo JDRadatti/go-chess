@@ -3,6 +3,7 @@ package chess
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"testing"
 )
 
@@ -152,5 +153,52 @@ func TestValidMoves(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+// TestMoves tests a series of moves with
+// Move() instead of validMove() [which is used by TestValidMove].
+// The difference between these two functions is Move() updates state.
+func TestMoves(t *testing.T) {
+	inputs := []struct {
+		name         string
+		board        []byte
+		startSquares []int // index of square in board.squares
+		destSquares  []int // index of square in board.squares
+		expected     []bool
+	}{
+		{
+			name: "london opening. black mirrors. opposite castle. all valid",
+			board: []byte{
+				'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
+				'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
+				'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
+			},
+			startSquares: []int{51, 11, 58, 1, 52, 12, 61, 5, 60, 0, 57, 3, 48, 4},
+			destSquares:  []int{35, 27, 37, 29, 44, 20, 43, 19, 63, 17, 42, 11, 40, 0},
+			expected:     []bool{true, true, true, true, true, true, true, true, true, true, true, true, true, true},
+		},
+	}
+
+	for j, input := range inputs {
+		t.Run(input.name, func(t *testing.T) {
+			board := NewBoardFrom(input.board)
+			assert.Equal(t, len(input.startSquares), len(input.destSquares))
+			assert.Equal(t, len(input.startSquares), len(input.expected))
+			for i, startI := range input.startSquares {
+				start := board.squares[startI]
+				dest := board.squares[input.destSquares[i]]
+				assert.Equal(t, input.expected[i], board.Move(start, dest),
+					fmt.Sprintf("test %d, subtest %d", j, i))
+				log.Println(board.String())
+			}
+
+		})
+
 	}
 }
