@@ -8,9 +8,10 @@ const (
 )
 
 const (
-	WIDTH       int = 8
-	HEIGHT      int = 8
-	NUM_SQUARES int = 64
+	WIDTH         int = 8
+	HEIGHT        int = 8
+	NUM_SQUARES   int = 64
+	CASTLE_OFFSET int = 2
 )
 
 // Board represents the state of a chess game.
@@ -65,7 +66,11 @@ func NewBoardFrom(b []byte) Board {
 // Move executes a move from start to dest, if valid and updates
 // necessary state.
 func (b *Board) Move(start *Square, dest *Square) bool {
-	if !b.validMove(start, dest) {
+
+	// check if castle
+	if b.castle(start, dest) {
+		return true
+	} else if !b.validMove(start, dest) {
 		return false
 	}
 
@@ -94,12 +99,6 @@ func (b *Board) Move(start *Square, dest *Square) bool {
 // 1. Knights can jump pieces
 // 2. King cannot move to square attacked by enemy(i.e. cannot move to its own death)
 // 3. Casling
-//   - The King is not currently in check prior to castling, the Rook can be attacked prior to castling, but not the King
-//   - The King is not in check on the square the King would be on after castling
-//   - The King is not in check on any of the squares the King passes through while castling
-//   - The King and the Rook involved have not moved yet during the game
-//   - All of the squares in between the King and the Rook are unoccupied by another piece
-//
 // 4. Pawns can move two squares on their first move
 // 5. en passant - pawn can capture diagonally iff:
 //   - The capturing pawn must have advanced exactly three ranks to perform this move.
@@ -115,7 +114,6 @@ func (b *Board) validMove(start *Square, dest *Square) bool {
 	// check if in check
 	// if in check, check checkmate
 
-	// check if castle
 	if !b.clearMove(start, dest) {
 		return false
 	}
@@ -212,4 +210,48 @@ func (b *Board) String() string {
 
 func (b *Board) turn() Player {
 	return Player(b.turns % 2)
+}
+// castle returns true iff the move from start to dest is a valid castle move
+// castle UPDATES STATE
+// Castling rules:
+//   - The King is not currently in check prior to castling, the Rook can be attacked prior to castling, but not the King
+//   - The King is not in check on the square the King would be on after castling
+//   - The King is not in check on any of the squares the King passes through while castling
+//   - The King and the Rook involved have not moved yet during the game
+//   - All of the squares in between the King and the Rook are unoccupied by another piece
+//
+// note: does not check for correct turn
+func (b *Board) castle(start *Square, dest *Square) bool {
+	if start.empty() || dest.empty() || !start.piece.king() || !dest.piece.rook() {
+		return false
+	}
+
+	if start.hasMoved() || dest.hasMoved() {
+		return false
+	}
+
+	var left, right int
+	var kingI, rookI int
+	if start.index < dest.index { // kingside castle
+		left, right = start.index, start.index+CASTLE_OFFSET
+		kingI, rookI = right, right-1
+	} else { // queenside castle
+		left, right = dest.index+CASTLE_OFFSET, start.index
+		kingI, rookI = left, left+1
+		if !b.squares[left-1].empty() {
+			return false
+		}
+	}
+	for i := left; i <= right; i++ {
+		if !b.squares[i].empty() && i != start.index ||
+			b.attacked(b.squares[i]) {
+			return false
+		}
+	}
+
+	// clear rook
+	start.piece, b.squares[kingI].piece = nil, start.piece
+	dest.piece, b.squares[rookI].piece = nil, dest.piece
+	b.turns++
+	return true
 }
