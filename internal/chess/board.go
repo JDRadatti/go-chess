@@ -180,7 +180,7 @@ func (b *Board) attacked(square *Square) bool {
 			continue
 		}
 		// Kings cannot attack
-		if s.piece.symbol == 'K' || s.piece.symbol == 'k' {
+		if s.piece.king() {
 			continue
 		}
 		if b.turn() != s.piece.player { // opponent piece
