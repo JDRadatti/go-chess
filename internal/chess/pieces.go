@@ -3,6 +3,37 @@
 // each game uses a pointer to the same pieces to avoid unnecessary allocs.
 package chess
 
+const (
+	KW    byte = 'k'
+	KB    byte = 'K'
+	QW    byte = 'q'
+	QB    byte = 'Q'
+	RW    byte = 'r'
+	RB    byte = 'R'
+	BW    byte = 'b'
+	BB    byte = 'B'
+	NW    byte = 'n'
+	NB    byte = 'N'
+	PW    byte = 'p'
+	PB    byte = 'P'
+	EMPTY byte = ' '
+)
+
+var Pieces map[byte]*Piece = map[byte]*Piece{
+	KW: KingW,
+	KB: KingB,
+	QW: QueenW,
+	QB: QueenB,
+	RW: RookW,
+	RB: RookB,
+	BW: BishopW,
+	BB: BishopB,
+	NW: KnightW,
+	NB: KnightB,
+	PW: PawnW,
+	PB: PawnB,
+}
+
 type Piece struct {
 	symbol     byte   // byte representation of this piece
 	directions []int  // directions allowed for this piece
@@ -19,34 +50,30 @@ func (p *Piece) validDirection(dir int) bool {
 	return false
 }
 
-const KW byte = 'k'
-const KB byte = 'K'
-const QW byte = 'q'
-const QB byte = 'Q'
-const RW byte = 'r'
-const RB byte = 'R'
-const BW byte = 'b'
-const BB byte = 'B'
-const NW byte = 'n'
-const NB byte = 'N'
-const PW byte = 'p'
-const PB byte = 'P'
-const EMPTY byte = ' '
-
-var Pieces map[byte]*Piece = map[byte]*Piece{
-	KW: KingW,
-	KB: KingB,
-	QW: QueenW,
-	QB: QueenB,
-	RW: RookW,
-	RB: RookB,
-	BW: BishopW,
-	BB: BishopB,
-	NW: KnightW,
-	NB: KnightB,
-	PW: PawnW,
-	PB: PawnB,
+func (p *Piece) king() bool {
+	return p.symbol == KW || p.symbol == KB
 }
+
+func (p *Piece) rook() bool {
+	return p.symbol == RW || p.symbol == RB
+}
+
+func (p *Piece) bishop() bool {
+	return p.symbol == BW || p.symbol == BB
+}
+
+func (p *Piece) pawn() bool {
+	return p.symbol == PW || p.symbol == PB
+}
+
+func (p *Piece) knight() bool {
+	return p.symbol == NW || p.symbol == NB
+}
+
+func (p *Piece) queen() bool {
+	return p.symbol == QW || p.symbol == QB
+}
+
 
 var KingW = &Piece{
 	symbol:     KW,
