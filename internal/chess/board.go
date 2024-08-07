@@ -77,6 +77,7 @@ func (b *Board) Move(start *Square, dest *Square) bool {
 		b.blackKing = dest
 	}
 	start.piece, dest.piece = nil, start.piece
+	start.markMoved()
 	b.turns++
 	return true
 }

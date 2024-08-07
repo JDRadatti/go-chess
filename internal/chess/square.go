@@ -2,6 +2,7 @@ package chess
 
 type Square struct {
 	index int
+	moved int8
 	piece *Piece
 }
 
@@ -17,6 +18,14 @@ func (s *Square) empty() bool {
 	return s.piece == nil
 }
 
+func (s *Square) hasMoved() bool {
+	return s.moved == 1
+}
+
+func (s *Square) markMoved() {
+	s.moved = 1
+}
+
 // samePlayer returns true iff both squares have a piece that are
 // owned by the same player
 func (s *Square) samePlayer(o *Square) bool {
@@ -30,10 +39,10 @@ func valid(col byte, row byte) bool {
 func InitSquaresFrom(board []byte) [NUM_SQUARES]*Square {
 	squares := [NUM_SQUARES]*Square{}
 	for i, symbol := range board {
-        squares[i] = &Square{
-            index: i,
-            piece: Pieces[symbol],
-        }
+		squares[i] = &Square{
+			index: i,
+			piece: Pieces[symbol],
+		}
 	}
 	return squares
 }
