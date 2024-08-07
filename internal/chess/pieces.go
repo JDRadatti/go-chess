@@ -31,7 +31,7 @@ const NW byte = 'n'
 const NB byte = 'N'
 const PW byte = 'p'
 const PB byte = 'P'
-const E byte = ' '
+const EMPTY byte = ' '
 
 var Pieces map[byte]*Piece = map[byte]*Piece{
 	KW: KingW,
