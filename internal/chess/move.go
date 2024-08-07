@@ -54,9 +54,9 @@ func move(start *Square, dest *Square) (int, int) {
 	} else if startFile == destFile && start.index < dest.index {
 		return SOUTH, destRank - startRank
 	} else if startRank == destRank && start.index > dest.index {
-		return EAST, destRank - startRank
+		return WEST, destFile - startFile
 	} else if startRank == destRank && start.index < dest.index {
-		return WEST, startRank - destRank
+		return EAST, startFile - destFile
 	}
 
 	rankDiff := startRank - destRank
