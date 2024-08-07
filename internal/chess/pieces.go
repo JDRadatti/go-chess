@@ -49,83 +49,83 @@ var Pieces map[byte]*Piece = map[byte]*Piece{
 }
 
 var KingW = &Piece{
-	symbol:     'k',
+	symbol:     KW,
 	directions: []int{NORTH, EAST, SOUTH, WEST, NORTHWEST, NORTHEAST, SOUTHWEST, SOUTHEAST},
 	maxSteps:   1,
 	player:     WHITE,
 }
 var KingB = &Piece{
-	symbol:     'K',
+	symbol:     KB,
 	directions: []int{NORTH, EAST, SOUTH, WEST, NORTHWEST, NORTHEAST, SOUTHWEST, SOUTHEAST},
 	maxSteps:   1,
 	player:     BLACK,
 }
 
 var QueenW = &Piece{
-	symbol:     'q',
+	symbol:     QW,
 	directions: []int{NORTH, EAST, SOUTH, WEST, NORTHWEST, NORTHEAST, SOUTHWEST, SOUTHEAST},
 	maxSteps:   WIDTH,
 	player:     WHITE,
 }
 
 var QueenB = &Piece{
-	symbol:     'Q',
+	symbol:     QB,
 	directions: []int{NORTH, EAST, SOUTH, WEST, NORTHWEST, NORTHEAST, SOUTHWEST, SOUTHEAST},
 	maxSteps:   WIDTH,
 	player:     BLACK,
 }
 
 var BishopW = &Piece{
-	symbol:     'b',
+	symbol:     BW,
 	directions: []int{NORTHWEST, NORTHEAST, SOUTHWEST, SOUTHEAST},
 	maxSteps:   WIDTH,
 	player:     WHITE,
 }
 
 var BishopB = &Piece{
-	symbol:     'B',
+	symbol:     BB,
 	directions: []int{NORTHWEST, NORTHEAST, SOUTHWEST, SOUTHEAST},
 	maxSteps:   WIDTH,
 	player:     BLACK,
 }
 
 var RookW = &Piece{
-	symbol:     'r',
+	symbol:     RW,
 	directions: []int{NORTH, EAST, SOUTH, WEST},
 	maxSteps:   WIDTH,
 	player:     WHITE,
 }
 
 var RookB = &Piece{
-	symbol:     'R',
+	symbol:     RB,
 	directions: []int{NORTH, EAST, SOUTH, WEST},
 	maxSteps:   WIDTH,
 	player:     BLACK,
 }
 
 var KnightW = &Piece{
-	symbol:     'n',
+	symbol:     NW,
 	directions: []int{KNIGHT0, KNIGHT1, KNIGHT2, KNIGHT3, KNIGHT4, KNIGHT5, KNIGHT6, KNIGHT7},
 	maxSteps:   1,
 	player:     WHITE,
 }
 
 var KnightB = &Piece{
-	symbol:     'N',
+	symbol:     NB,
 	directions: []int{KNIGHT0, KNIGHT1, KNIGHT2, KNIGHT3, KNIGHT4, KNIGHT5, KNIGHT6, KNIGHT7},
 	maxSteps:   1,
 	player:     BLACK,
 }
 
 var PawnW = &Piece{
-	symbol:     'p',
+	symbol:     PW,
 	directions: []int{NORTH, NORTHWEST, NORTHEAST},
 	maxSteps:   1,
 	player:     WHITE,
 }
 
 var PawnB = &Piece{
-	symbol:     'P',
+	symbol:     PB,
 	directions: []int{SOUTH, SOUTHWEST, SOUTHEAST},
 	maxSteps:   1,
 	player:     BLACK,
