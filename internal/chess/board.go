@@ -129,12 +129,16 @@ func (b *Board) validMove(start *Square, dest *Square) bool {
 			return false
 		}
 	case 'p':
-		if dest.empty() && start.index-dest.index != WIDTH {
-			return false
-		}
+		fallthrough
 	case 'P':
-		if dest.empty() && start.index-dest.index != -WIDTH {
-			return false
+		indexDiff := start.index - dest.index
+		if indexDiff < 0 {
+			indexDiff = -indexDiff
+		}
+		if dest.empty() && indexDiff%WIDTH != 0 {
+			return false // moved diagonal without capture
+		} else if start.hasMoved() && indexDiff > WIDTH {
+			return false // moved two forward on non-first move
 		}
 	}
 	return true

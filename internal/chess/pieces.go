@@ -119,14 +119,14 @@ var KnightB = &Piece{
 
 var PawnW = &Piece{
 	symbol:     PW,
-	directions: []int{NORTH, NORTHWEST, NORTHEAST},
-	maxSteps:   1,
+	directions: []int{NORTH, NORTHWEST, NORTHEAST, NORTH2},
+	maxSteps:   2,
 	player:     WHITE,
 }
 
 var PawnB = &Piece{
 	symbol:     PB,
-	directions: []int{SOUTH, SOUTHWEST, SOUTHEAST},
-	maxSteps:   1,
+	directions: []int{SOUTH, SOUTHWEST, SOUTHEAST, SOUTH2},
+	maxSteps:   2,
 	player:     BLACK,
 }

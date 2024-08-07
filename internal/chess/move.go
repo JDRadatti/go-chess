@@ -3,6 +3,8 @@ package chess
 const (
 	NORTH     int = -WIDTH
 	SOUTH     int = WIDTH
+	NORTH2    int = 2 * -WIDTH
+	SOUTH2    int = 2 * WIDTH
 	EAST      int = 1
 	WEST      int = -1
 	NORTHEAST int = -WIDTH + 1
