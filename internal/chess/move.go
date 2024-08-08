@@ -22,6 +22,22 @@ const (
 	INVALID   int = NUM_SQUARES + 1
 )
 
+type Move struct {
+	startSquare *Square
+	destSquare  *Square
+	startPiece  *Piece
+	destPiece   *Piece
+}
+
+func NewMove(startS *Square, destS *Square, startP *Piece, destP *Piece) *Move {
+	return &Move{
+		startSquare: startS,
+		destSquare:  destS,
+		startPiece:  startP,
+		destPiece:   destP,
+	}
+}
+
 // move returns the direction and step size from start to end
 // move assumes a board of WIDTH represented as a 1D array
 //
@@ -54,7 +70,7 @@ func move(start *Square, dest *Square) (int, int) {
 	} else if startFile == destFile && start.index < dest.index {
 		return SOUTH, destRank - startRank
 	} else if startRank == destRank && start.index > dest.index {
-		return WEST, startFile - destFile
+		return WEST, destFile - startFile
 	} else if startRank == destRank && start.index < dest.index {
 		return EAST, destFile - startFile
 	}
