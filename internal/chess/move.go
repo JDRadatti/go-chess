@@ -1,5 +1,29 @@
 package chess
 
+import "strings"
+
+var RANKS map[int]string = map[int]string{
+	0: "8",
+	1: "7",
+	2: "6",
+	3: "5",
+	4: "4",
+	5: "3",
+	6: "2",
+	7: "1",
+}
+
+var FILES map[int]string = map[int]string{
+	0: "a",
+	1: "b",
+	2: "c",
+	3: "d",
+	4: "e",
+	5: "f",
+	6: "g",
+	7: "h",
+}
+
 const (
 	NORTH     int = -WIDTH
 	SOUTH     int = WIDTH
@@ -108,4 +132,83 @@ func move(start *Square, dest *Square) (int, int) {
 	}
 
 	return INVALID, 0
+}
+
+// Algebraic chess notation
+// A move is represented by a string of:
+// 1. the piece moved {K, Q, R, N, B, or blank for pawn}
+// 2. the file the piece moved to {a, b, c, d, e, f, g, h}
+// 3. the rank the piece moved to {1, 2, 3, 4, 5, 6, 7, 8}
+// For example: Kd2 moves the king to d2
+// Special Cases:
+// 1. If two pieces of the same type can reach the same square
+//   - In this case, add the file
+//   - If the file is still ambiguous, replace with rank
+//
+// 2. Captures are represented with an 'x', like Kxd2 for King takes d2
+// 3. O-O-O for queen side castle
+// 4. O-O for king side castle
+// 5. Checkmate represented with a #
+// 6. Check represented with a +
+// 7. "1-0" for white wins, "0-1" for black wind, "1/2-1/2" for draw
+func (m *Move) toAlgebraic(b *Board) string {
+	builder := strings.Builder{}
+	switch m.startPiece.symbol {
+	case KW:
+		fallthrough
+	case KB:
+		builder.WriteString("K")
+	case QW:
+		fallthrough
+	case QB:
+		builder.WriteString("Q")
+	case RW:
+		fallthrough
+	case RB:
+		builder.WriteString("R")
+		builder.WriteString(m.checkAmbiguous(b))
+	case BW:
+		fallthrough
+	case BB:
+		builder.WriteString("B")
+	case NW:
+		fallthrough
+	case NB:
+		builder.WriteString("N")
+		builder.WriteString(m.checkAmbiguous(b))
+	}
+
+	if m.destPiece != nil { // capture
+		builder.WriteString("x")
+	}
+
+	builder.WriteString(m.destSquare.String())
+	if m.check {
+		builder.WriteString("+")
+	}
+	if m.mate {
+		builder.WriteString("#")
+	}
+	return builder.String()
+}
+
+// TODO: check if holding mapping to all pieces speeds this up
+func (m *Move) checkAmbiguous(b *Board) string {
+	for _, square := range b.squares {
+		if square == m.startSquare ||
+			square.empty() || !square.samePlayer(m.startSquare) {
+			continue
+		}
+		if square.piece.symbol == m.startPiece.symbol {
+			if b.clearMove(square, m.destSquare) {
+				// ambiguous
+				if square.file() == m.startSquare.file() {
+					return RANKS[m.startSquare.rank()]
+				} else {
+					return FILES[m.startSquare.file()]
+				}
+			}
+		}
+	}
+	return ""
 }

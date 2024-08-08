@@ -30,6 +30,10 @@ func (s *Square) markUnmoved() {
 	s.moved = false
 }
 
+func (s *Square) String() string {
+	return FILES[s.file()] + RANKS[s.rank()]
+}
+
 // samePlayer returns true iff both squares have a piece that are
 // owned by the same player
 func (s *Square) samePlayer(o *Square) bool {
