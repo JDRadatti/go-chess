@@ -54,9 +54,9 @@ func NewBoardFrom(b []byte) Board {
 			continue
 		}
 		switch s.piece.symbol {
-		case 'k':
+		case KW:
 			board.whiteKing = board.squares[i]
-		case 'K':
+		case KB:
 			board.blackKing = board.squares[i]
 		}
 	}
@@ -76,9 +76,9 @@ func (b *Board) Move(start *Square, dest *Square) bool {
 
 	// Update state
 	switch start.piece.symbol {
-	case 'k':
+	case KW:
 		b.whiteKing = dest
-	case 'K':
+	case KB:
 		b.blackKing = dest
 	}
 	start.piece, dest.piece = nil, start.piece
@@ -120,15 +120,15 @@ func (b *Board) validMove(start *Square, dest *Square) bool {
 
 	// check edge cases
 	switch start.piece.symbol {
-	case 'k':
+	case KW:
 		fallthrough
-	case 'K':
+	case KB:
 		if b.attacked(dest) {
 			return false
 		}
-	case 'p':
+	case PW:
 		fallthrough
-	case 'P':
+	case PB:
 		indexDiff := start.index - dest.index
 		if indexDiff < 0 {
 			indexDiff = -indexDiff
@@ -190,24 +190,6 @@ func (b *Board) attacked(square *Square) bool {
 		}
 	}
 	return false
-}
-
-func (b *Board) String() string {
-	builder := ""
-	counter := 0
-	for _, square := range b.squares {
-		if counter%8 == 0 {
-			builder += "\n"
-		}
-
-		if square.empty() {
-			builder += "_ "
-		} else {
-			builder += string(square.piece.symbol) + " "
-		}
-		counter++
-	}
-	return builder
 }
 
 func (b *Board) turn() Player {
@@ -273,3 +255,22 @@ func (b *Board) castle(start *Square, dest *Square) bool {
 	b.turns++
 	return true
 }
+
+func (b *Board) String() string {
+	builder := ""
+	counter := 0
+	for _, square := range b.squares {
+		if counter%8 == 0 {
+			builder += "\n"
+		}
+
+		if square.empty() {
+			builder += "_ "
+		} else {
+			builder += string(square.piece.symbol) + " "
+		}
+		counter++
+	}
+	return builder
+}
+

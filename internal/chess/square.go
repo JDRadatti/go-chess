@@ -49,14 +49,14 @@ func InitSquaresFrom(board []byte) [NUM_SQUARES]*Square {
 
 func InitSquaresClassic() [NUM_SQUARES]*Square {
 	board := []byte{
-		'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
-		'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P',
-		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-		'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
-		'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
+		RB, NB, BB, QB, KB, BB, NB, RB,
+		PB, PB, PB, PB, PB, PB, PB, PB,
+		EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+		EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+		EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+		EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+		PW, PW, PW, PW, PW, PW, PW, PW,
+		RW, NW, BW, QW, KW, BW, NW, RW,
 	}
 	return InitSquaresFrom(board)
 }
