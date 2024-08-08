@@ -119,6 +119,8 @@ func (b *Board) makeMove(move *Move) {
 
 // validMove checks if a move from start to destination
 // is valid. A move if valid if it satisfies the following criteria:
+// NOTE: this function is stateless, so it does not check things like
+// if the game is over and if its the correct players turn
 // 1. game is not over
 // 2. start contains a piece belonging to player of current turn
 // 3. dest is a valid move direction of the piece on start
@@ -226,6 +228,39 @@ func (b *Board) inCheck(s *Square) bool {
 		return false
 	}
 	return b.attacked(s)
+}
+
+// inCheck returns if the given player is checked or mated.
+// if not checked and not mate(i.e. no valid move) the, stale mate
+func (b *Board) checkOrMate(player Player) (bool, bool) {
+	var king *Square
+	if player == BLACK {
+		king = b.blackKing
+	} else {
+		king = b.whiteKing
+	}
+
+	check := b.attacked(king)
+
+	// Iterate through all valid moves for the given player,
+	// if they have a move, its not check or stale
+	for _, square := range b.squares {
+		if square.empty() || square.piece.player != player {
+			continue
+		}
+
+		for _, dir := range square.piece.directions {
+			currIndex := square.index + dir
+			if currIndex < 0 || currIndex >= NUM_SQUARES {
+				continue
+			}
+			nextSquare := b.squares[currIndex]
+			if b.validMove(square, nextSquare) {
+				return check, false
+			}
+		}
+	}
+	return check, true
 }
 
 // castle returns true iff the move from start to dest is a valid castle move
