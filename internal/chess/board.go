@@ -104,7 +104,6 @@ func (b *Board) Move(start *Square, dest *Square) bool {
 //   - The capturing pawn must have advanced exactly three ranks to perform this move.
 //   - The captured pawn must have moved two squares in one move, landing right next to the capturing pawn.
 //   - The en passant capture must be performed on the turn immediately after the pawn being captured moves. If the player does not capture en passant on that turn, they no longer can do it later.
-//
 // 6. Pawns can upgrade when reaching the other side
 func (b *Board) validMove(start *Square, dest *Square) bool {
 
