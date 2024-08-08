@@ -221,18 +221,11 @@ func (b *Board) turn() Player {
 }
 
 // inCheck returns true iff the current player is in check.
-func (b *Board) inCheck() bool {
-	switch b.turn() {
-	case WHITE:
-		if b.attacked(b.whiteKing) {
-			return true
-		}
-	case BLACK:
-		if b.attacked(b.blackKing) {
-			return true
-		}
+func (b *Board) inCheck(s *Square) bool {
+	if s.empty() || !s.piece.king() {
+		return false
 	}
-	return false
+	return b.attacked(s)
 }
 
 // castle returns true iff the move from start to dest is a valid castle move
@@ -252,6 +245,10 @@ func (b *Board) castle(start *Square, dest *Square) bool {
 
 	if start.hasMoved() || dest.hasMoved() {
 		return false
+	}
+
+	if b.inCheck(start) {
+		return false // cannot castle if in check
 	}
 
 	var left, right int
@@ -280,6 +277,18 @@ func (b *Board) castle(start *Square, dest *Square) bool {
 	return true
 }
 
+// currentKing returns the king belonging to the player
+// whose turn it is
+func (b *Board) currentKing() *Square {
+	switch b.turn() {
+	case WHITE:
+		return b.whiteKing
+	case BLACK:
+		return b.blackKing
+	}
+	return nil
+}
+
 func (b *Board) String() string {
 	builder := ""
 	counter := 0
@@ -297,4 +306,3 @@ func (b *Board) String() string {
 	}
 	return builder
 }
-
