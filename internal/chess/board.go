@@ -276,11 +276,11 @@ func (b *Board) hasValidMoves(player Player) bool {
 			}
 			nextSquare := b.squares[currIndex]
 			if b.validMove(square, nextSquare) {
-				return check, false
+				return true
 			}
 		}
 	}
-	return check, true
+	return false
 }
 
 // castle returns true iff the move from start to dest is a valid castle move
