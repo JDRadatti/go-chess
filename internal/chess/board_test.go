@@ -3,27 +3,9 @@ package chess
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"log"
+	//"log"
 	"testing"
 )
-
-func checkState(t *testing.T, board *Board) {
-	// make sure the kings are tracked properly
-	found := 0
-	for i, square := range board.squares {
-		if square.empty() {
-			continue
-		}
-		if square.piece.symbol == 'k' {
-			assert.Equal(t, i, board.whiteKing.index)
-			found++
-		} else if square.piece.symbol == 'K' {
-			assert.Equal(t, i, board.blackKing.index)
-			found++
-		}
-	}
-	assert.Equal(t, 2, found, "both kings must exist")
-}
 
 func TestValidMoves(t *testing.T) {
 	inputs := []struct {
@@ -136,6 +118,40 @@ func TestValidMoves(t *testing.T) {
 			expected:     []bool{false, false, true, false, true},
 			turn:         []Player{BLACK, BLACK, BLACK, BLACK, WHITE},
 		},
+		{
+			name: "invalid king moves",
+			board: []byte{
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', 'K', ' ', 'b', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', 'k', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			},
+			startSquares: []int{9, 9},
+			destSquares:  []int{17, 2},
+			expected:     []bool{false, false},
+			turn:         []Player{BLACK, BLACK},
+		},
+		{
+			name: "invalid king captures",
+			board: []byte{
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', 'K', ' ', ' ', ' ', ' ', ' ', ' ',
+				'p', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'r', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'k', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			},
+			startSquares: []int{9},
+			destSquares:  []int{16},
+			expected:     []bool{false},
+			turn:         []Player{BLACK},
+		},
 	}
 
 	for j, input := range inputs {
@@ -195,7 +211,7 @@ func TestMoves(t *testing.T) {
 				dest := board.squares[input.destSquares[i]]
 				assert.Equal(t, input.expected[i], board.Move(start, dest),
 					fmt.Sprintf("test %d, subtest %d", j, i))
-				log.Println(board.String())
+				//log.Println(board.String())
 			}
 
 		})
@@ -540,10 +556,10 @@ func TestMate(t *testing.T) {
 			expectedMate:  true,
 		},
 		{
-			name: "night and pawn mate",
+			name: "knight and pawn mate",
 			board: []byte{
 				'K', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', 'p', ' ', ' ', ' ', ' ', ' ', ' ',
 				'p', ' ', 'n', ' ', ' ', ' ', ' ', ' ',
 				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
 				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
@@ -609,11 +625,107 @@ func TestMate(t *testing.T) {
 		t.Run(input.name, func(t *testing.T) {
 			board := NewBoardFrom(input.board)
 			board.turns = int(input.player)
-			check, mate := board.checkOrMate(input.player)
+			check, mate, _ := board.checkOrMateOrStale()
 			assert.Equal(t, input.expectedCheck, check,
 				fmt.Sprintf("test %d for check", j))
 			assert.Equal(t, input.expectedMate, mate,
 				fmt.Sprintf("test %d for mate", j))
+		})
+
+	}
+}
+
+func TestStale(t *testing.T) {
+	inputs := []struct {
+		name     string
+		board    []byte
+		player   Player // the player of current turn
+		expected bool   // true if the player is in stalemate
+	}{
+		{
+			name: "basic queen check, no mate",
+			board: []byte{
+				'K', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'Q', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'k', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			},
+			player:   WHITE,
+			expected: false,
+		},
+		{
+			name: "ladder mate",
+			board: []byte{
+				'K', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'q', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'k', 'r', ' ', ' ', ' ', ' ', ' ', ' ',
+			},
+			player:   BLACK,
+			expected: false,
+		},
+		{
+			name: "rook stale mate",
+			board: []byte{
+				'K', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', 'r', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', 'k', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			},
+			player:   BLACK,
+			expected: true,
+		},
+		{
+			name: "pawn and king stalemate",
+			board: []byte{
+				'K', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'p', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'k', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			},
+			player:   BLACK,
+			expected: true,
+		},
+		{
+			name: "No stale mate with capture",
+			board: []byte{
+				'K', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', 'r', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'k', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			},
+			player:   BLACK,
+			expected: false,
+		},
+	}
+
+	for j, input := range inputs {
+		t.Run(input.name, func(t *testing.T) {
+			board := NewBoardFrom(input.board)
+			board.turns = int(input.player)
+			_, _, stalemate := board.checkOrMateOrStale()
+			assert.Equal(t, input.expected, stalemate,
+				fmt.Sprintf("test %d for stalemate", j))
 		})
 
 	}

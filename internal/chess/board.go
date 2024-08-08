@@ -84,8 +84,14 @@ func (b *Board) Move(start *Square, dest *Square) bool {
 		b.undoMove(move)
 		return false
 	}
-
 	b.turns++
+
+	// note: this must be after incrementing turns
+	check, mate, stale := b.checkOrMateOrStale()
+	move.check = check
+	move.mate = mate
+	b.gameOver = move.mate || stale
+
 	return true
 }
 
@@ -230,20 +236,22 @@ func (b *Board) inCheck(s *Square) bool {
 	return b.attacked(s)
 }
 
-// inCheck returns if the given player is checked or mated.
-// if not checked and not mate(i.e. no valid move) the, stale mate
-func (b *Board) checkOrMate(player Player) (bool, bool) {
-	var king *Square
-	if player == BLACK {
-		king = b.blackKing
-	} else {
-		king = b.whiteKing
-	}
+// checkOrMateOrStale checks if the current player is either in
+// check, checkmate, or stalemate
+// This should not be called to get just check (instead, use inCheck)
+func (b *Board) checkOrMateOrStale() (bool, bool, bool) {
+	hasValidMoves := b.hasValidMoves(b.turn())
+	check := b.inCheck(b.currentKing())
+	return check, check && !hasValidMoves, !check && !hasValidMoves
+}
 
-	check := b.attacked(king)
+// inCheck returns if the given player has valid moves.
+// checkmate if checked and has no moves
+// stalemate if not checked and has no moves
+func (b *Board) hasValidMoves(player Player) bool {
 
-	// Iterate through all valid moves for the given player,
-	// if they have a move, its not check or stale
+	// Iterate through all valid moves for the given player
+	// and check for a valid move
 	for _, square := range b.squares {
 		if square.empty() || square.piece.player != player {
 			continue
