@@ -27,6 +27,8 @@ type Move struct {
 	destSquare  *Square
 	startPiece  *Piece
 	destPiece   *Piece
+	check       bool
+	mate        bool
 }
 
 func NewMove(startS *Square, destS *Square, startP *Piece, destP *Piece) *Move {
