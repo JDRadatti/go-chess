@@ -27,7 +27,10 @@ func (s *Square) markMoved() {
 }
 
 func (s *Square) markUnmoved() {
-	s.moveCount++
+	if s.moveCount <= 0 {
+		return
+	}
+	s.moveCount--
 }
 
 func (s *Square) String() string {
