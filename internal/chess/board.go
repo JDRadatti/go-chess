@@ -206,17 +206,17 @@ func (b *Board) clearMove(start *Square, dest *Square) bool {
 // an opponent piece. Uses current player's turn to check for opponent.
 // A square is attacked by an opponent piece if the opponent piece
 // can CAPTURE a piece on that square if it were their turn.
+// edge case: pawns cannot capture forward
 func (b *Board) attacked(square *Square) bool {
 	for _, s := range b.squares {
 		if s.index == square.index || s.empty() {
 			continue
 		}
-		// Kings cannot attack
-		if s.piece.king() {
-			continue
-		}
+
 		if b.turn() != s.piece.player { // opponent piece
-			if b.clearMove(s, square) {
+			if s.piece.pawn() && s.file() == square.file() {
+				continue
+			} else if b.clearMove(s, square) {
 				return true
 			}
 		}
