@@ -14,6 +14,7 @@ func TestToAlgabraic(t *testing.T) {
 		destSquares  int // index of square in board.squares
 		expected     string
 		player       Player
+		castle       bool
 	}{
 		{
 			name: "a4",
@@ -175,6 +176,40 @@ func TestToAlgabraic(t *testing.T) {
 			destSquares:  1,
 			expected:     "Rab8",
 		},
+		{
+			name: "Kingside castle",
+			board: []byte{
+				'r', ' ', ' ', ' ', 'k', ' ', ' ', 'r',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			},
+			startSquares: 4,
+			castle:       true,
+			destSquares:  7,
+			expected:     "O-O",
+		},
+		{
+			name: "Queenside castle",
+			board: []byte{
+				'r', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			},
+			startSquares: 4,
+			castle:       true,
+			destSquares:  0,
+			expected:     "O-O-O",
+		},
 	}
 
 	for j, input := range inputs {
@@ -182,7 +217,15 @@ func TestToAlgabraic(t *testing.T) {
 			board := NewBoardFrom(input.board) // reset board every time
 			start := board.squares[input.startSquares]
 			dest := board.squares[input.destSquares]
-			move := NewMove(start, dest, start.piece, dest.piece)
+			move := Move{
+				startSquare1: start,
+				destSquare1:  dest,
+				piece1:       start.piece,
+				startSquare2: dest,
+				destSquare2:  nil,
+				piece2:       dest.piece,
+				castle:       input.castle,
+			}
 			assert.Equal(t, input.expected, move.toAlgebraic(&board),
 				fmt.Sprintf("test %d", j))
 

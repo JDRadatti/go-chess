@@ -1,9 +1,9 @@
 package chess
 
 type Square struct {
-	index int
-	moved bool
-	piece *Piece
+	index     int
+	moveCount int
+	piece     *Piece
 }
 
 func (s *Square) file() int {
@@ -19,15 +19,15 @@ func (s *Square) empty() bool {
 }
 
 func (s *Square) hasMoved() bool {
-	return s.moved
+	return s.moveCount > 0
 }
 
 func (s *Square) markMoved() {
-	s.moved = true
+	s.moveCount++
 }
 
 func (s *Square) markUnmoved() {
-	s.moved = false
+	s.moveCount++
 }
 
 func (s *Square) String() string {
@@ -38,10 +38,6 @@ func (s *Square) String() string {
 // owned by the same player
 func (s *Square) samePlayer(o *Square) bool {
 	return !s.empty() && !o.empty() && s.piece.player == o.piece.player
-}
-
-func valid(col byte, row byte) bool {
-	return 'a' <= col && col <= 'h' && '1' <= row && row <= '8'
 }
 
 func InitSquaresFrom(board []byte) [NUM_SQUARES]*Square {

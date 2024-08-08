@@ -25,6 +25,14 @@ var FILES map[int]string = map[int]string{
 }
 
 const (
+	WHITEWIN = "1-0"
+	BLACKWIN = "0-1"
+	DRAW     = "1/2-1/2"
+	QCASTLE  = "O-O-O"
+	KCASTLE  = "O-O"
+)
+
+const (
 	NORTH     int = -WIDTH
 	SOUTH     int = WIDTH
 	NORTH2    int = 2 * -WIDTH
@@ -46,22 +54,18 @@ const (
 	INVALID   int = NUM_SQUARES + 1
 )
 
+// Move represents a move by moving piece1 from startSquare1 to
+// destSquare1 and moving piece2 from startSquare2 to destSquare2
 type Move struct {
-	startSquare *Square
-	destSquare  *Square
-	startPiece  *Piece
-	destPiece   *Piece
-	check       bool
-	mate        bool
-}
-
-func NewMove(startS *Square, destS *Square, startP *Piece, destP *Piece) *Move {
-	return &Move{
-		startSquare: startS,
-		destSquare:  destS,
-		startPiece:  startP,
-		destPiece:   destP,
-	}
+	startSquare1 *Square
+	destSquare1  *Square
+	piece1       *Piece
+	startSquare2 *Square
+	destSquare2  *Square
+	piece2       *Piece
+	check        bool
+	mate         bool
+	castle       bool
 }
 
 // move returns the direction and step size from start to end
@@ -152,8 +156,14 @@ func move(start *Square, dest *Square) (int, int) {
 // 6. Check represented with a +
 // 7. "1-0" for white wins, "0-1" for black wind, "1/2-1/2" for draw
 func (m *Move) toAlgebraic(b *Board) string {
+	if m.castle {
+		if m.startSquare1.index > m.startSquare2.index {
+			return "O-O-O"
+		}
+		return "O-O"
+	}
 	builder := strings.Builder{}
-	switch m.startPiece.symbol {
+	switch m.piece1.symbol {
 	case KW:
 		fallthrough
 	case KB:
@@ -178,11 +188,11 @@ func (m *Move) toAlgebraic(b *Board) string {
 		builder.WriteString(m.checkAmbiguous(b))
 	}
 
-	if m.destPiece != nil { // capture
+	if m.piece2 != nil { // capture
 		builder.WriteString("x")
 	}
 
-	builder.WriteString(m.destSquare.String())
+	builder.WriteString(m.destSquare1.String())
 	if m.check {
 		builder.WriteString("+")
 	}
@@ -192,20 +202,24 @@ func (m *Move) toAlgebraic(b *Board) string {
 	return builder.String()
 }
 
+func validInput(file byte, rank byte) bool {
+	return 'a' <= file && file <= 'h' && '1' <= rank && rank <= '8'
+}
+
 // TODO: check if holding mapping to all pieces speeds this up
 func (m *Move) checkAmbiguous(b *Board) string {
 	for _, square := range b.squares {
-		if square == m.startSquare ||
-			square.empty() || !square.samePlayer(m.startSquare) {
+		if square == m.startSquare1 ||
+			square.empty() || !square.samePlayer(m.startSquare1) {
 			continue
 		}
-		if square.piece.symbol == m.startPiece.symbol {
-			if b.clearMove(square, m.destSquare) {
+		if square.piece.symbol == m.piece1.symbol {
+			if b.clearMove(square, m.destSquare1) {
 				// ambiguous
-				if square.file() == m.startSquare.file() {
-					return RANKS[m.startSquare.rank()]
+				if square.file() == m.startSquare1.file() {
+					return RANKS[m.startSquare1.rank()]
 				} else {
-					return FILES[m.startSquare.file()]
+					return FILES[m.startSquare1.file()]
 				}
 			}
 		}

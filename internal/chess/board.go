@@ -31,6 +31,7 @@ type Board struct {
 	turns     int
 	whiteKing *Square
 	blackKing *Square
+	moves     []*Move
 	gameOver  bool
 }
 
@@ -48,6 +49,7 @@ func NewBoardClassic() Board {
 func NewBoardFrom(b []byte) Board {
 	board := Board{
 		squares: InitSquaresFrom(b),
+		moves:   []*Move{},
 	}
 	for i, s := range board.squares {
 		if s.empty() {
@@ -77,7 +79,14 @@ func (b *Board) Move(start *Square, dest *Square) bool {
 		return false
 	}
 
-	move := NewMove(start, dest, start.piece, dest.piece)
+	move := &Move{
+		startSquare1: start,
+		destSquare1:  dest,
+		piece1:       start.piece,
+		startSquare2: dest,
+		destSquare2:  nil,
+		piece2:       dest.piece,
+	}
 	b.makeMove(move)
 
 	if b.inCheck(b.currentKing()) { // cannot move into a check
@@ -91,36 +100,38 @@ func (b *Board) Move(start *Square, dest *Square) bool {
 	move.check = check
 	move.mate = mate
 	b.gameOver = move.mate || stale
+	b.moves = append(b.moves, move)
 
 	return true
 }
 
 func (b *Board) undoMove(move *Move) {
-	move.startSquare.piece, move.destSquare.piece = move.startPiece, move.destPiece
-
-	// Update state
-	switch move.startPiece.symbol {
-	case KW:
-		b.whiteKing = move.startSquare
-	case KB:
-		b.blackKing = move.startSquare
+	move.startSquare1.piece = move.piece1
+	move.startSquare2.piece = move.piece2
+	move.startSquare1.markUnmoved()
+	move.startSquare2.markUnmoved()
+	if move.destSquare2 != nil {
+		move.destSquare2.piece = nil
+		move.destSquare2.piece = move.piece2
+		move.startSquare2.markMoved()
 	}
 
-	move.startSquare.markUnmoved()
+	b.updateKingSquare(move.startSquare1)
+	b.updateKingSquare(move.startSquare2)
 }
 
 func (b *Board) makeMove(move *Move) {
-	move.startSquare.piece, move.destSquare.piece = nil, move.startPiece
-
-	// Update state
-	switch move.destSquare.piece.symbol {
-	case KW:
-		b.whiteKing = move.destSquare
-	case KB:
-		b.blackKing = move.destSquare
+	move.startSquare1.piece = nil
+	move.startSquare2.piece = nil
+	move.destSquare1.piece = move.piece1
+	move.startSquare1.markMoved()
+	if move.destSquare2 != nil {
+		move.destSquare2.piece = move.piece2
+		move.startSquare2.markMoved()
 	}
 
-	move.startSquare.markMoved()
+	b.updateKingSquare(move.destSquare1)
+	b.updateKingSquare(move.destSquare2)
 }
 
 // validMove checks if a move from start to destination
@@ -326,10 +337,38 @@ func (b *Board) castle(start *Square, dest *Square) bool {
 	}
 
 	// clear rook
-	start.piece, b.squares[kingI].piece = nil, start.piece
-	dest.piece, b.squares[rookI].piece = nil, dest.piece
+	// TODO: undo castle
+	move := &Move{
+		startSquare1: start,
+		destSquare1:  b.squares[kingI],
+		piece1:       start.piece,
+		startSquare2: dest,
+		destSquare2:  b.squares[rookI],
+		piece2:       dest.piece,
+		castle:       true,
+	}
+	b.makeMove(move)
 	b.turns++
+
+	// note: this must be after incrementing turns
+	check, mate, stale := b.checkOrMateOrStale()
+	move.check = check
+	move.mate = mate
+	b.gameOver = move.mate || stale
+	b.moves = append(b.moves, move)
 	return true
+}
+
+func (b *Board) updateKingSquare(newKingSquare *Square) {
+	if newKingSquare == nil || newKingSquare.empty() || !newKingSquare.piece.king() {
+		return
+	}
+	switch newKingSquare.piece.player {
+	case WHITE:
+		b.whiteKing = newKingSquare
+	case BLACK:
+		b.blackKing = newKingSquare
+	}
 }
 
 // currentKing returns the king belonging to the player
