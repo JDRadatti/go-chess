@@ -146,7 +146,7 @@ func (b *Board) makeMove(move *Move) {
 // 6. Pawns can upgrade when reaching the other side
 func (b *Board) validMove(start *Square, dest *Square) bool {
 
-	if !b.clearMove(start, dest) {
+	if !b.clearMove(start, dest) || !b.emptyOrCapturable(start, dest) {
 		return false
 	}
 
@@ -177,7 +177,8 @@ func (b *Board) validMove(start *Square, dest *Square) bool {
 // clearMove move checks if a moves from start to dest is:
 // 1. possible based on the piece in start square
 // 2. there are no pieces between start and dest
-// 3. dest is either empty or contains an opponent piece
+// clearMove DOES NOT check the piece in dest, dest could be empty
+// or occupied by an opponenet piece or a piece of the same team
 func (b *Board) clearMove(start *Square, dest *Square) bool {
 	dir, steps := move(start, dest)
 	if dir == INVALID || steps > start.piece.maxSteps {
@@ -186,6 +187,8 @@ func (b *Board) clearMove(start *Square, dest *Square) bool {
 	if !start.piece.validDirection(dir) {
 		return false
 	}
+
+	steps-- // don't check dest
 	for i := steps; i > 0; i-- {
 		currIndex := start.index + i*dir
 		if currIndex < 0 || currIndex >= NUM_SQUARES {
@@ -193,9 +196,6 @@ func (b *Board) clearMove(start *Square, dest *Square) bool {
 		}
 		currSquare := b.squares[currIndex]
 		if !currSquare.empty() {
-			if !currSquare.samePlayer(start) && i == steps {
-				continue
-			}
 			return false
 		}
 	}
@@ -222,6 +222,18 @@ func (b *Board) attacked(square *Square) bool {
 		}
 	}
 	return false
+}
+
+// emptyOrCapturable returns ture iff the a piece in start
+// can can move to or capture a piece in dest
+func (b *Board) emptyOrCapturable(start *Square, dest *Square) bool {
+	if start.empty() {
+		return false
+	}
+	if dest.empty() {
+		return true
+	}
+	return !start.samePlayer(dest)
 }
 
 func (b *Board) turn() Player {
