@@ -67,24 +67,54 @@ func NewBoardFrom(b []byte) Board {
 // necessary state.
 func (b *Board) Move(start *Square, dest *Square) bool {
 
-	// check if castle
+	if b.gameOver || start.empty() || start.piece.player != b.turn() {
+		return false
+	}
+
 	if b.castle(start, dest) {
 		return true
 	} else if !b.validMove(start, dest) {
 		return false
 	}
 
-	// Update state
-	switch start.piece.symbol {
-	case KW:
-		b.whiteKing = dest
-	case KB:
-		b.blackKing = dest
+	move := NewMove(start, dest, start.piece, dest.piece)
+	b.makeMove(move)
+
+	if b.inCheck(b.currentKing()) { // cannot move into a check
+		b.undoMove(move)
+		return false
 	}
-	start.piece, dest.piece = nil, start.piece
-	start.markMoved()
+
 	b.turns++
 	return true
+}
+
+func (b *Board) undoMove(move *Move) {
+	move.startSquare.piece, move.destSquare.piece = move.startPiece, move.destPiece
+
+	// Update state
+	switch move.startPiece.symbol {
+	case KW:
+		b.whiteKing = move.startSquare
+	case KB:
+		b.blackKing = move.startSquare
+	}
+
+	move.startSquare.markUnmoved()
+}
+
+func (b *Board) makeMove(move *Move) {
+	move.startSquare.piece, move.destSquare.piece = nil, move.startPiece
+
+	// Update state
+	switch move.destSquare.piece.symbol {
+	case KW:
+		b.whiteKing = move.destSquare
+	case KB:
+		b.blackKing = move.destSquare
+	}
+
+	move.startSquare.markMoved()
 }
 
 // validMove checks if a move from start to destination
@@ -104,14 +134,9 @@ func (b *Board) Move(start *Square, dest *Square) bool {
 //   - The capturing pawn must have advanced exactly three ranks to perform this move.
 //   - The captured pawn must have moved two squares in one move, landing right next to the capturing pawn.
 //   - The en passant capture must be performed on the turn immediately after the pawn being captured moves. If the player does not capture en passant on that turn, they no longer can do it later.
+//
 // 6. Pawns can upgrade when reaching the other side
 func (b *Board) validMove(start *Square, dest *Square) bool {
-
-	if b.gameOver || start.empty() || start.piece.player != b.turn() {
-		return false
-	}
-	// check if in check
-	// if in check, check checkmate
 
 	if !b.clearMove(start, dest) {
 		return false
