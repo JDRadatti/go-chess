@@ -205,10 +205,11 @@ func TestMoves(t *testing.T) {
 
 func TestCheck(t *testing.T) {
 	inputs := []struct {
-		name     string
-		board    []byte
-		player   Player // the player to check if in check
-		expected bool   // whether the given board is a check for player
+		name      string
+		board     []byte
+		kingIndex int
+		player    Player // the player to check if in check
+		expected  bool   // whether the given board is a check for player
 	}{
 		{
 			name: "basic check on white king with queen",
@@ -222,8 +223,9 @@ func TestCheck(t *testing.T) {
 				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
 				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
 			},
-			player:   WHITE,
-			expected: true,
+			player:    WHITE,
+			kingIndex: 60,
+			expected:  true,
 		},
 		{
 			name: "basic check on black king with queen",
@@ -237,8 +239,9 @@ func TestCheck(t *testing.T) {
 				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
 				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
 			},
-			player:   BLACK,
-			expected: true,
+			kingIndex: 4,
+			player:    BLACK,
+			expected:  true,
 		},
 		{
 			name: "basic game position without check",
@@ -252,8 +255,9 @@ func TestCheck(t *testing.T) {
 				'p', 'p', 'p', ' ', ' ', 'p', 'p', 'p',
 				'r', 'n', ' ', 'q', 'k', ' ', ' ', 'r',
 			},
-			player:   WHITE,
-			expected: false,
+			kingIndex: 60,
+			player:    WHITE,
+			expected:  false,
 		},
 		{
 			name: "check blocked opponent piece",
@@ -267,8 +271,9 @@ func TestCheck(t *testing.T) {
 				' ', ' ', ' ', ' ', ' ', 'N', ' ', ' ',
 				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
 			},
-			player:   WHITE,
-			expected: false,
+			kingIndex: 60,
+			player:    WHITE,
+			expected:  false,
 		},
 		{
 			name: "revealed check",
@@ -282,23 +287,9 @@ func TestCheck(t *testing.T) {
 				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
 				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
 			},
-			player:   WHITE,
-			expected: true,
-		},
-		{
-			name: "pawn check",
-			board: []byte{
-				' ', ' ', ' ', ' ', 'K', ' ', ' ', ' ',
-				' ', ' ', ' ', 'p', ' ', ' ', ' ', ' ',
-				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
-			},
-			player:   BLACK,
-			expected: true,
+			kingIndex: 60,
+			player:    WHITE,
+			expected:  true,
 		},
 	}
 
@@ -306,7 +297,202 @@ func TestCheck(t *testing.T) {
 		t.Run(input.name, func(t *testing.T) {
 			board := NewBoardFrom(input.board)
 			board.turns = int(input.player)
-			assert.Equal(t, input.expected, board.inCheck(),
+			square := board.squares[input.kingIndex]
+			assert.Equal(t, input.expected, board.inCheck(square),
+				fmt.Sprintf("test %d", j))
+		})
+
+	}
+}
+
+func TestMoveInCheck(t *testing.T) {
+	inputs := []struct {
+		name       string
+		board      []byte
+		startIndex int
+		destIndex  int
+		player     Player // the player of current turn
+		expected   bool   // whether the given move is valid
+	}{
+		{
+			name: "basic queen move out of check",
+			board: []byte{
+				'K', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'Q', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'k', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			},
+			startIndex: 56,
+			destIndex:  57,
+			player:     WHITE,
+			expected:   true,
+		},
+		{
+			name: "basic queen capture to avoid check",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', ' ',
+				' ', ' ', ' ', 'P', 'P', 'P', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', 'n', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			startIndex: 12,
+			destIndex:  21,
+			player:     BLACK,
+			expected:   true,
+		},
+		{
+			name: "queen move in double check",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', ' ',
+				' ', ' ', ' ', 'q', 'P', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', 'n', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			startIndex: 4,
+			destIndex:  5,
+			player:     BLACK,
+			expected:   true,
+		},
+		{
+			name: "basic queen move out of check INVALID",
+			board: []byte{
+				'K', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'Q', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'k', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+			},
+			startIndex: 56,
+			destIndex:  48,
+			player:     WHITE,
+			expected:   false,
+		},
+		{
+			name: "basic queen capture to avoid check INVALID",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', ' ',
+				' ', ' ', ' ', 'P', 'P', 'P', ' ', ' ',
+				' ', ' ', 'Q', ' ', ' ', 'n', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			startIndex: 11,
+			destIndex:  18,
+			player:     BLACK,
+			expected:   false,
+		},
+		{
+			name: "queen move in double check INVALID",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', ' ',
+				' ', ' ', ' ', 'q', 'P', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', 'n', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			startIndex: 4,
+			destIndex:  11,
+			player:     BLACK,
+			expected:   false,
+		},
+		{
+			name: "cannot castle in check",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', 'R',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'r', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			startIndex: 4,
+			destIndex:  7,
+			player:     BLACK,
+			expected:   false,
+		},
+		{
+			name: "random valid move",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', ' ',
+				'P', ' ', ' ', ' ', 'P', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', 'n', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			startIndex: 8,
+			destIndex:  16,
+			player:     BLACK,
+			expected:   false,
+		},
+		{
+			name: "cannot move into a check",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', 'R',
+				' ', ' ', ' ', ' ', 'R', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', 'r', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			startIndex: 4,
+			destIndex:  5,
+			player:     BLACK,
+			expected:   false,
+		},
+		{
+			name: "cannot move expose your king",
+			board: []byte{
+				' ', ' ', ' ', ' ', 'K', ' ', ' ', 'R',
+				' ', ' ', ' ', ' ', 'R', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'r', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', 'k', ' ', ' ', ' ',
+			},
+			startIndex: 12,
+			destIndex:  13,
+			player:     BLACK,
+			expected:   false,
+		},
+	}
+
+	for j, input := range inputs {
+		t.Run(input.name, func(t *testing.T) {
+			board := NewBoardFrom(input.board)
+			board.turns = int(input.player)
+			start := board.squares[input.startIndex]
+			dest := board.squares[input.destIndex]
+			assert.Equal(t, input.expected, board.Move(start, dest),
 				fmt.Sprintf("test %d", j))
 		})
 
