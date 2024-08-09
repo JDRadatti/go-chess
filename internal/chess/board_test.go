@@ -3,7 +3,6 @@ package chess
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	//"log"
 	"testing"
 )
 
