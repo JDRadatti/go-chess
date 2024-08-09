@@ -67,7 +67,12 @@ func NewBoardFrom(b []byte) Board {
 
 // Move executes a move from start to dest, if valid and updates
 // necessary state.
-func (b *Board) Move(start *Square, dest *Square) bool {
+func (b *Board) Move(m string) bool {
+
+	start, dest := b.fromAlgebraic(m)
+	if start == nil || dest == nil {
+		return false
+	}
 
 	if b.gameOver || start.empty() || start.piece.player != b.turn() {
 		return false

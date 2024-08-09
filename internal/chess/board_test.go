@@ -208,7 +208,8 @@ func TestMoves(t *testing.T) {
 			for i, startI := range input.startSquares {
 				start := board.squares[startI]
 				dest := board.squares[input.destSquares[i]]
-				assert.Equal(t, input.expected[i], board.Move(start, dest),
+				m := squaresToNotation(start, dest)
+				assert.Equal(t, input.expected[i], board.Move(m),
 					fmt.Sprintf("test %d, subtest %d", j, i))
 				//log.Println(board.String())
 			}
@@ -507,7 +508,8 @@ func TestMoveInCheck(t *testing.T) {
 			board.turns = int(input.player)
 			start := board.squares[input.startIndex]
 			dest := board.squares[input.destIndex]
-			assert.Equal(t, input.expected, board.Move(start, dest),
+			m := squaresToNotation(start, dest)
+			assert.Equal(t, input.expected, board.Move(m),
 				fmt.Sprintf("test %d", j))
 		})
 
@@ -728,4 +730,8 @@ func TestStale(t *testing.T) {
 		})
 
 	}
+}
+
+func squaresToNotation(s1 *Square, s2 *Square) string {
+	return fmt.Sprintf("%s%s", s1.String(), s2.String())
 }
