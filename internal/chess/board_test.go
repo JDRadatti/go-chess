@@ -6,6 +6,45 @@ import (
 	"testing"
 )
 
+// TestIntegration full length chess games.
+// After Game finishes, undo all moves to make sure undoMove is working
+func TestIntegration(t *testing.T) {
+
+	inputs := []struct {
+		name     string
+		board    []byte
+		moves    []string // square notation
+		expected []string // algebraic notation
+	}{
+		{
+			name: "Game ending in checkmate",
+			board: []byte{
+				'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
+				'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
+				'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
+			},
+			moves:    []string{"d2d4", "d7d5", "a2a4", "b8c6", ""},
+			expected: []string{"d4", "d5", "a4", "Nc6", ""},
+		},
+	}
+
+	for j, input := range inputs {
+		t.Run(input.name, func(t *testing.T) {
+			board := NewBoardFrom(input.board)
+			for i, move := range input.moves {
+				aNotation, _ := board.Move(move)
+				assert.Equal(t, input.expected[i], aNotation,
+					fmt.Sprintf("test %d, move %d", j, i))
+			}
+		})
+	}
+}
+
 func TestValidMoves(t *testing.T) {
 	inputs := []struct {
 		name         string
@@ -209,7 +248,8 @@ func TestMoves(t *testing.T) {
 				start := board.squares[startI]
 				dest := board.squares[input.destSquares[i]]
 				m := squaresToNotation(start, dest)
-				assert.Equal(t, input.expected[i], board.Move(m),
+				_, ok := board.Move(m)
+				assert.Equal(t, input.expected[i], ok,
 					fmt.Sprintf("test %d, subtest %d", j, i))
 				//log.Println(board.String())
 			}
@@ -509,7 +549,8 @@ func TestMoveInCheck(t *testing.T) {
 			start := board.squares[input.startIndex]
 			dest := board.squares[input.destIndex]
 			m := squaresToNotation(start, dest)
-			assert.Equal(t, input.expected, board.Move(m),
+			_, ok := board.Move(m)
+			assert.Equal(t, input.expected, ok,
 				fmt.Sprintf("test %d", j))
 		})
 

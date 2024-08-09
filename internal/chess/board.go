@@ -67,21 +67,23 @@ func NewBoardFrom(b []byte) Board {
 
 // Move executes a move from start to dest, if valid and updates
 // necessary state.
-func (b *Board) Move(m string) bool {
+// Returns the algrbraic represention of the move, if valid, and
+// a bool that is true iff the move was valid and carried out.
+func (b *Board) Move(m string) (string, bool) {
 
 	start, dest := b.fromAlgebraic(m)
 	if start == nil || dest == nil {
-		return false
+		return "", false
 	}
 
 	if b.gameOver || start.empty() || start.piece.player != b.turn() {
-		return false
+		return "", false
 	}
 
 	if b.castle(start, dest) {
-		return true
+		return "", true
 	} else if !b.validMove(start, dest) {
-		return false
+		return "", false
 	}
 
 	move := &Move{
@@ -95,8 +97,8 @@ func (b *Board) Move(m string) bool {
 	b.makeMove(move)
 
 	if b.inCheck(b.currentKing()) { // cannot move into a check
-		b.undoMove(move)
-		return false
+		b.undoMove()
+		return "", false
 	}
 	b.turns++
 
@@ -107,7 +109,7 @@ func (b *Board) Move(m string) bool {
 	b.gameOver = move.mate || stale
 	b.moves = append(b.moves, move)
 
-	return true
+	return move.toAlgebraic(b), true
 }
 
 func (b *Board) undoMove(move *Move) {
