@@ -411,6 +411,34 @@ func (b *Board) king(player Player) *Square {
 	return nil
 }
 
+// The FEN representation of this board
+func (b *Board) FEN() []byte {
+	fen := []byte{}
+	emptySquareCounter := 0
+	for i, square := range b.squares {
+		if i%8 == 0 {
+			if emptySquareCounter > 0 {
+				fen = append(fen, byte(emptySquareCounter)+'0')
+				emptySquareCounter = 0
+			}
+			fen = append(fen, '/')
+		}
+
+		if square.empty() {
+			emptySquareCounter++
+		} else {
+			if emptySquareCounter > 0 {
+				fen = append(fen, byte(emptySquareCounter)+'0')
+				emptySquareCounter = 0
+			}
+			fen = append(fen, square.piece.symbol)
+		}
+	}
+	return fen[1:]
+
+}
+
+// String is a more human readable representation to print
 func (b *Board) String() string {
 	builder := ""
 	counter := 0
