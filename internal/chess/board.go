@@ -80,8 +80,8 @@ func (b *Board) Move(m string) (string, bool) {
 		return "", false
 	}
 
-	if b.castle(start, dest) {
-		return "", true
+	if notation, ok := b.castle(start, dest); ok {
+		return notation, true
 	} else if !b.validMove(start, dest) {
 		return "", false
 	}
@@ -314,17 +314,17 @@ func (b *Board) hasValidMoves(player Player) bool {
 //   - All of the squares in between the King and the Rook are unoccupied by another piece
 //
 // note: does not check for correct turn
-func (b *Board) castle(start *Square, dest *Square) bool {
+func (b *Board) castle(start *Square, dest *Square) (string, bool) {
 	if start.empty() || dest.empty() || !start.piece.king() || !dest.piece.rook() {
-		return false
+		return "", false
 	}
 
 	if start.hasMoved() || dest.hasMoved() {
-		return false
+		return "", false
 	}
 
 	if b.inCheck(start) {
-		return false // cannot castle if in check
+		return "", false // cannot castle if in check
 	}
 
 	var left, right int
@@ -336,13 +336,13 @@ func (b *Board) castle(start *Square, dest *Square) bool {
 		left, right = dest.index+CASTLE_OFFSET, start.index
 		kingI, rookI = left, left+1
 		if !b.squares[left-1].empty() {
-			return false
+			return "", false
 		}
 	}
 	for i := left; i <= right; i++ {
 		if !b.squares[i].empty() && i != start.index ||
 			b.attacked(b.squares[i]) {
-			return false
+			return "", false
 		}
 	}
 
@@ -366,7 +366,7 @@ func (b *Board) castle(start *Square, dest *Square) bool {
 	move.mate = mate
 	b.gameOver = move.mate || stale
 	b.moves = append(b.moves, move)
-	return true
+	return move.toAlgebraic(b), true
 }
 
 func (b *Board) updateKingSquare(newKingSquare *Square) {
