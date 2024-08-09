@@ -112,7 +112,9 @@ func (b *Board) Move(m string) (string, bool) {
 	return move.toAlgebraic(b), true
 }
 
-func (b *Board) undoMove(move *Move) {
+func (b *Board) undoMove() {
+	move := b.moves[len(b.moves)-1]
+	b.moves = b.moves[:len(b.moves)-1] // pop from moves
 	move.startSquare1.piece = move.piece1
 	move.startSquare2.piece = move.piece2
 	move.startSquare1.markUnmoved()
@@ -139,6 +141,7 @@ func (b *Board) makeMove(move *Move) {
 
 	b.updateKingSquare(move.destSquare1)
 	b.updateKingSquare(move.destSquare2)
+	b.moves = append(b.moves, move)
 }
 
 // validMove checks if a move from start to destination
