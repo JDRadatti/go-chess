@@ -3,6 +3,7 @@ package chess
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"testing"
 )
 
@@ -12,32 +13,24 @@ func TestIntegration(t *testing.T) {
 
 	inputs := []struct {
 		name     string
-		board    []byte
 		moves    []string // square notation
 		expected []string // algebraic notation
 	}{
 		{
-			name: "Game ending in checkmate",
-			board: []byte{
-				'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
-				'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P',
-				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-				'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
-				'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
-			},
-			moves:    []string{"d2d4", "d7d5", "a2a4", "b8c6", ""},
-			expected: []string{"d4", "d5", "a4", "Nc6", ""},
+			name:     "Game ending in checkmate",
+			moves:    []string{"d2d4", "d7d5", "c2c4", "g8f6", "b1c3", "e7e6", "c1g5", "h7h6", "e2e3", "h6g5", "c4d5", "e6d5", "d1a4", "a7a6", "b8c6", "e1a1", "a7a6", "g1f3", "b7b6", "h2h3", "a6a5", "h3h4", "c8a6", "f3e5", "f6g4", "a4c6", "e8d7", "d8d7", "c6d7", "a8b8"},
+			expected: []string{"d4", "d5", "c4", "Nf6", "Nc3", "e6", "Bg5", "h6", "e3", "hxg5", "cxd5", "exd5", "Qa4+", "", "Nc6", "O-O-O", "a6", "Nf3", "b6", "h3", "a5", "h4", "Ba6", "Ne5", "Ng4", "Qxc6+", "", "Qd7", "Qxd7#", ""},
 		},
 	}
 
 	for j, input := range inputs {
 		t.Run(input.name, func(t *testing.T) {
-			board := NewBoardFrom(input.board)
+			board := NewBoardClassic()
 			for i, move := range input.moves {
 				aNotation, _ := board.Move(move)
+				log.Println(aNotation)
+				log.Println(board.String())
+				log.Println(string(board.FEN()))
 				assert.Equal(t, input.expected[i], aNotation,
 					fmt.Sprintf("test %d, move %d", j, i))
 			}
