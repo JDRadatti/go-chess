@@ -6,7 +6,79 @@ import (
 	"testing"
 )
 
-func TestToAlgabraic(t *testing.T) {
+func TestFromAlgebraicValid(t *testing.T) {
+	board := NewBoardFrom([]byte{
+		'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
+		'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P',
+		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+		'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
+		'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
+	})
+	width, height := 7, 8
+	index := 0
+	destSquare, destIndex := "a8", 0
+	for j := width; j >= 0; j-- {
+		rank := '1' + j
+		for i := 0; i < height; i++ {
+			file := 'a' + i
+			square := fmt.Sprintf("%c", file) + fmt.Sprintf("%c", rank) + destSquare
+			s1, s2 := board.fromAlgebraic(square)
+			assert.Equal(t, index, s1.index)
+			assert.Equal(t, destIndex, s2.index)
+			index++
+		}
+	}
+
+	startSquare, startIndex := "a8", 0
+	index = 0
+	for j := width; j >= 0; j-- {
+		rank := '1' + j
+		for i := 0; i < height; i++ {
+			file := 'a' + i
+			square := startSquare + fmt.Sprintf("%c", file) + fmt.Sprintf("%c", rank)
+			s1, s2 := board.fromAlgebraic(square)
+			assert.Equal(t, index, s2.index)
+			assert.Equal(t, startIndex, s1.index)
+			index++
+		}
+	}
+}
+
+func TestFromAlgebraicInvalid(t *testing.T) {
+	board := NewBoardFrom([]byte{
+		'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
+		'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P',
+		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+		'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
+		'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
+	})
+	inputs := []string{
+		"a9b2",
+		"abcd",
+		"1234",
+		"ijkl",
+		"i9j0",
+		"a8",
+		"",
+		"*!@#",
+		"--",
+        "a1b2c3",
+	}
+	for _, input := range inputs {
+		s1, s2 := board.fromAlgebraic(input)
+        var expected *Square
+		assert.Equal(t, expected, s1)
+		assert.Equal(t, expected, s2)
+	}
+}
+
+func TestToAlgebraic(t *testing.T) {
 	inputs := []struct {
 		name         string
 		board        []byte

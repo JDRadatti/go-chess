@@ -206,6 +206,32 @@ func validInput(file byte, rank byte) bool {
 	return 'a' <= file && file <= 'h' && '1' <= rank && rank <= '8'
 }
 
+// fromAlgebraic parses a move
+// fromAlgebraic accepts a move in the format f1r1f2r2
+// where f1/2 are files and r1/2 are ranks.
+func (b *Board) fromAlgebraic(m string) (*Square, *Square) {
+	if len(m) != 4 {
+		return nil, nil
+	}
+	f1, r1, f2, r2 := m[0], m[1], m[2], m[3]
+	if !validInput(f1, r1) || !validInput(f2, r2) {
+		return nil, nil
+	}
+
+	x := WIDTH-int(r1 - '0')
+	y := int(f1 - 'a')
+	if x == y {
+	}
+	squareIndex1 := (WIDTH-int(r1-'0'))*WIDTH + int(f1-'a')
+	squareIndex2 := (WIDTH-int(r2-'0'))*WIDTH + int(f2-'a')
+	if squareIndex1 >= 0 && squareIndex1 <= NUM_SQUARES &&
+		squareIndex2 >= 0 && squareIndex2 <= NUM_SQUARES {
+		return b.squares[squareIndex1], b.squares[squareIndex2]
+	}
+
+	return nil, nil
+}
+
 // TODO: check if holding mapping to all pieces speeds this up
 func (m *Move) checkAmbiguous(b *Board) string {
 	for _, square := range b.squares {
