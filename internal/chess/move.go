@@ -189,15 +189,20 @@ func (m *Move) toAlgebraic(b *Board) string {
 	}
 
 	if m.piece2 != nil { // capture
+		switch m.piece1.symbol {
+		case PW:
+			fallthrough
+		case PB:
+			builder.WriteString(FILES[m.startSquare1.file()])
+		}
 		builder.WriteString("x")
 	}
 
 	builder.WriteString(m.destSquare1.String())
-	if m.check {
-		builder.WriteString("+")
-	}
 	if m.mate {
 		builder.WriteString("#")
+	} else if m.check {
+		builder.WriteString("+")
 	}
 	return builder.String()
 }
@@ -218,10 +223,6 @@ func (b *Board) fromAlgebraic(m string) (*Square, *Square) {
 		return nil, nil
 	}
 
-	x := WIDTH-int(r1 - '0')
-	y := int(f1 - 'a')
-	if x == y {
-	}
 	squareIndex1 := (WIDTH-int(r1-'0'))*WIDTH + int(f1-'a')
 	squareIndex2 := (WIDTH-int(r2-'0'))*WIDTH + int(f2-'a')
 	if squareIndex1 >= 0 && squareIndex1 <= NUM_SQUARES &&
