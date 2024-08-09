@@ -297,6 +297,20 @@ func (b *Board) hasValidMoves(player Player) bool {
 			}
 			nextSquare := b.squares[currIndex]
 			if b.validMove(square, nextSquare) {
+				move := &Move{
+					startSquare1: square,
+					destSquare1:  nextSquare,
+					piece1:       square.piece,
+					startSquare2: nextSquare,
+					destSquare2:  nil,
+					piece2:       nextSquare.piece,
+				}
+				b.makeMove(move)
+				inCheckAfterMove := b.inCheck(b.king(player))
+				b.undoMove()
+				if inCheckAfterMove {
+					continue
+				}
 				return true
 			}
 		}
@@ -384,7 +398,11 @@ func (b *Board) updateKingSquare(newKingSquare *Square) {
 // currentKing returns the king belonging to the player
 // whose turn it is
 func (b *Board) currentKing() *Square {
-	switch b.turn() {
+	return b.king(b.turn())
+}
+
+func (b *Board) king(player Player) *Square {
+	switch player {
 	case WHITE:
 		return b.whiteKing
 	case BLACK:
