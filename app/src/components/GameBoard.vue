@@ -61,6 +61,15 @@ function dragstartHandler(ev) {
     }
 
     ev.target.classList.add("hide");
+
+    // Move dragPiece to the cursor position. 
+    // This is because default drag creates an undesired opacity 
+    if (dragPiece.value.classList[dragPiece.value.classList.length - 1] == "hide") {
+        dragPiece.value.classList.add(dragged.classList[1]);
+        dragPiece.value.classList.remove(dragPiece.value.classList[dragPiece.value.classList.length - 2]);
+        dragPiece.value.style.setProperty('--cursor-y', ev.clientY - dragPiece.value.offsetWidth / 2 + "px");
+        dragPiece.value.style.setProperty('--cursor-x', ev.clientX - dragPiece.value.offsetWidth / 2 + "px");
+    }
     return
 }
 
@@ -109,6 +118,15 @@ function dragendHandler(ev) {
         dest.value = -1;
         dragged = null;
     }
+
+    dragPiece.value.classList.remove(dragPiece.value.classList[dragPiece.value.classList.length - 1]);
+    dragPiece.value.classList.add("hide");
+}
+
+function dragoverHandler(ev) {
+    // Note: the piece should always be the last element in the dragPiece's classList
+    dragPiece.value.style.setProperty('--cursor-y', ev.clientY - dragPiece.value.offsetWidth / 2 + "px");
+    dragPiece.value.style.setProperty('--cursor-x', ev.clientX - dragPiece.value.offsetWidth / 2 + "px");
 }
 
 function captureHandler(ev) {
@@ -145,14 +163,14 @@ onMounted(() => {
 
 <template>
     <h1 class="green">{{ start }} {{ dest }}</h1>
-    <div class="board" draggable="false">
-        <div class="square unselectable" v-for="n in 64" draggable="false" @dragenter="dragenterHandler($event)"
-            @dragleave="dragleaveHandler($event)" @drop="dropHandler($event, n)" @dragover.prevent @dragenter.prevent>
+    <div inert class="drag unselectable hide" draggable="false" ref="dragPiece"></div>
+    <div class="board-container" @dragover="dragoverHandler($event)" @dragenter.prevent @dragover.prevent>
+        <div class="board" draggable="false">
+            <div class="square unselectable" v-for="n in 64" draggable="false" @dragenter="dragenterHandler($event)"
+                @dragleave="dragleaveHandler($event)" @drop="dropHandler($event, n)" @dragover.prevent
+                @dragenter.prevent>
+            </div>
         </div>
-    </div>
-
-
-    <div class="pieces">
         <div class="piece kb square-4" draggable="true" @dragstart="dragstartHandler($event)"
             @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
         </div>
@@ -217,16 +235,20 @@ onMounted(() => {
         <div class="piece pw square-54" draggable="true" @dragstart="dragstartHandler($event)"
             @dragend="dragendHandler($event)"> </div>
         <div class="piece pw square-55" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)"> </div>
+            @dragend="dragendHandler($event)">
+        </div>
     </div>
 </template>
 
 <style scoped>
+.board-container {
+    position: relative;
+}
+
 .board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     gap: 0;
-    position: relative;
 }
 
 .drag-hover {
@@ -510,6 +532,19 @@ onMounted(() => {
 
 .square-63 {
     transform: translate(700%, -100%)
+}
+
+
+.drag {
+    width: var(--square-size);
+    height: var(--square-size);
+    border: none;
+    background-repeat: no-repeat;
+    background-size: cover;
+    position: absolute;
+    z-index: 1;
+    left: var(--cursor-x);
+    top: var(--cursor-y);
 }
 
 .piece {
