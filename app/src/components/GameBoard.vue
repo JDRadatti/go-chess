@@ -42,6 +42,60 @@ function updateSquare(index, piece) {
     }
 }
 
+const start = ref(-1);
+const dest = ref(-1);
+let dragged = null;
+function dragstartHandler(ev) {
+    if (dragged != null) {
+        return
+    }
+
+    dragged = ev.target
+    for (let i = 0; i < dragged.classList.length; i++) {
+        if (dragged.classList[i].startsWith('square-')) {
+            start.value = Number(dragged.classList[i].slice(7))
+        }
+    }
+
+    ev.target.classList.add("hide");
+    return
+}
+
+function dragenterHandler(ev) {
+
+    if (dragged == null) {
+        return
+    }
+
+    ev.target.classList.add("drag-hover")
+    ev.dataTransfer.dropEffect = "move";
+}
+function dragleaveHandler(ev) {
+
+    if (dragged == null) {
+        return
+    }
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "move";
+    ev.target.classList.remove("drag-hover")
+}
+
+function dropHandler(ev, n) {
+    if (dragged == null) {
+        return
+    }
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "move";
+    ev.target.classList.remove("drag-hover")
+    dest.value = n - 1
+    if (dragged != null) {
+        dragged.classList.remove("square-" + start.value);
+        dragged.classList.add("square-" + dest.value);
+        dragged.classList.remove("hide");
+    }
+    dragged = null;
+}
+
 onMounted(() => {
     //updateBoard("RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr")
     const squareElements = document.querySelectorAll('.square')
@@ -56,52 +110,53 @@ onMounted(() => {
             squareElements[i].classList.add("light")
         }
     }
-    console.log(squareElements)
+
 });
 
 </script>
 
 <template>
-    <h1 class="green">This is your game board {{ $route.params.id }}</h1>
-    <div class="board">
-        <div class="square" v-for="n in 64">
+    <h1 class="green">{{ start }} {{ dest }}</h1>
+    <div class="board" draggable="false">
+        <div class="square unselectable" v-for="n in 64" draggable="false" @dragenter="dragenterHandler($event)"
+            @dragleave="dragleaveHandler($event)" @drop="dropHandler($event, n)" @dragover.prevent @dragenter.prevent>
         </div>
     </div>
 
 
     <div class="pieces">
-        <div class="piece kb square-4"> </div>
-        <div class="piece qb square-3"> </div>
-        <div class="piece rb square-7"> </div>
-        <div class="piece rb square-0"> </div>
-        <div class="piece bb square-5"> </div>
-        <div class="piece bb square-2"> </div>
-        <div class="piece nb square-6"> </div>
-        <div class="piece nb square-1"> </div>
-        <div class="piece pb square-8"> </div>
-        <div class="piece pb square-9"> </div>
-        <div class="piece pb square-10"> </div>
-        <div class="piece pb square-11"> </div>
-        <div class="piece pb square-12"> </div>
-        <div class="piece pb square-13"> </div>
-        <div class="piece pb square-14"> </div>
-        <div class="piece pb square-15"> </div>
-        <div class="piece kw square-60"> </div>
-        <div class="piece qw square-59"> </div>
-        <div class="piece rw square-56"> </div>
-        <div class="piece rw square-63"> </div>
-        <div class="piece bw square-58"> </div>
-        <div class="piece bw square-61"> </div>
-        <div class="piece nw square-62"> </div>
-        <div class="piece nw square-57"> </div>
-        <div class="piece pw square-48"> </div>
-        <div class="piece pw square-49"> </div>
-        <div class="piece pw square-50"> </div>
-        <div class="piece pw square-51"> </div>
-        <div class="piece pw square-52"> </div>
-        <div class="piece pw square-53"> </div>
-        <div class="piece pw square-54"> </div>
-        <div class="piece pw square-55"> </div>
+        <div class="piece kb square-4" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece qb square-3" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece rb square-7" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece rb square-0" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece bb square-5" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece bb square-2" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece nb square-6" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece nb square-1" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pb square-8" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pb square-9" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pb square-10" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pb square-11" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pb square-12" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pb square-13" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pb square-14" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pb square-15" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece kw square-60" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece qw square-59" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece rw square-56" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece rw square-63" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece bw square-58" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece bw square-61" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece nw square-62" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece nw square-57" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pw square-48" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pw square-49" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pw square-50" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pw square-51" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pw square-52" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pw square-53" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pw square-54" draggable="true" @dragstart="dragstartHandler($event)"> </div>
+        <div class="piece pw square-55" draggable="true" @dragstart="dragstartHandler($event)"> </div>
     </div>
 </template>
 
@@ -111,6 +166,10 @@ onMounted(() => {
     grid-template-columns: repeat(8, 1fr);
     gap: 0;
     position: relative;
+}
+
+.drag-hover {
+    border: solid black;
 }
 
 .hide {
@@ -125,7 +184,6 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: none;
 }
 
 .square.light {
@@ -135,7 +193,6 @@ onMounted(() => {
 .square.dark {
     background-color: var(--dark-square);
 }
-
 
 .square-0 {
     transform: translate(0%, -800%)
@@ -451,5 +508,13 @@ onMounted(() => {
 
 .pb {
     background-image: url("/pieces/pb.svg");
+}
+
+.unselectable {
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 </style>
