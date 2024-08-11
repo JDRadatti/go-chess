@@ -2,6 +2,12 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
+const dragPiece = ref(null);
+const boardRef = ref(null);
+const start = ref(-1);
+const dest = ref(-1);
+let dragged = null;
+
 const PieceToIcon = {
     "B": "bb",
     "b": "bw",
@@ -42,9 +48,6 @@ function updateSquare(index, piece) {
     }
 }
 
-const start = ref(-1);
-const dest = ref(-1);
-let dragged = null;
 function dragstartHandler(ev) {
     if (dragged != null) {
         return
