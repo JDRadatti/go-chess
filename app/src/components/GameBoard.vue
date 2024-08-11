@@ -413,7 +413,7 @@ onMounted(() => {
 }
 
 .square-44 {
-    transform: translate(300%, -300%)
+    transform: translate(400%, -300%)
 }
 
 .square-45 {
