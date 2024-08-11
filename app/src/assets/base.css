@@ -27,8 +27,11 @@
     --piece-size: calc(var(--square-size) * 0.90);
 
 
-    --dark-square: var(--vt-c-indigo);
-    --light-square: var(--vt-c-white);
+    --dark-square: var(--purple);
+    --light-square: var(--white);
+    --square-hover-border-color: var(--vt-c-indigo);
+    --square-hover-border-width: calc(var(--square-size) * 0.1);
+    --square-hover-border-type: inset;
 }
 
 /* semantic color variables for this project */

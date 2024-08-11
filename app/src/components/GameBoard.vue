@@ -169,7 +169,7 @@ onMounted(() => {
 }
 
 .drag-hover {
-    border: solid black;
+    border: var(--square-hover-border-width) var(--square-hover-border-type) var(--square-hover-border-color);
 }
 
 .hide {
