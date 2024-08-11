@@ -70,6 +70,7 @@ function dragenterHandler(ev) {
     ev.target.classList.add("drag-hover")
     ev.dataTransfer.dropEffect = "move";
 }
+
 function dragleaveHandler(ev) {
 
     if (dragged == null) {
@@ -94,6 +95,8 @@ function dropHandler(ev, n) {
         dragged.classList.remove("hide");
     }
     dragged = null;
+
+    // ASK THE SERVER
 }
 
 function dragendHandler(ev) {
@@ -103,6 +106,19 @@ function dragendHandler(ev) {
         dest.value = -1;
         dragged = null;
     }
+}
+
+function captureHandler(ev) {
+
+    ev.preventDefault();
+    for (let i = 0; i < ev.target.classList.length; i++) {
+        if (ev.target.classList[i].startsWith('square-')) {
+            dest.value = Number(ev.target.classList[i].slice(7))
+        }
+    }
+    // ASK THE SERVER
+
+    dragged = null
 }
 
 onMounted(() => {
@@ -135,7 +151,8 @@ onMounted(() => {
 
     <div class="pieces">
         <div class="piece kb square-4" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)"> </div>
+            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
+        </div>
         <div class="piece qb square-3" draggable="true" @dragstart="dragstartHandler($event)"
             @dragend="dragendHandler($event)"> </div>
         <div class="piece rb square-7" draggable="true" @dragstart="dragstartHandler($event)"
