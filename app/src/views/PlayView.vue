@@ -1,39 +1,19 @@
 <script setup>
 import GameBoard from '../components/GameBoard.vue'
 import GameOptions from '../components/GameOptions.vue'
+import { startGame } from '../scripts/api.js'
 import { useRouter } from 'vue-router'
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
 
-const router = useRouter()
-const playerID = ref("")
-var time = 10
-var increment = 0
+const router = useRouter();
 
-function initialize() {
-    playerID.value = localStorage.getItem("playerID")
-    if (playerID.value == null) {
-        axios.post("/token").then(response => {
-            playerID.value = response.data
-            localStorage.setItem("playerID", playerID.value)
-        }).catch(err => {
-            console.log("error", err)
-        })
-    }
-};
-onMounted(() => initialize());
-
-function startGame() {
-    axios.post('/play', {
-        playerID: playerID.value,
-        time: time,
-        increment: increment,
-    }).then(response => {
-        var gameID = response.data["GameID"];
-        var playerID = response.data["PlayerID"];
-        router.push(`/game/${gameID}`);
-    }).catch(error => {
-        console.log(error)
+function clickStart() {
+    startGame().then((response) => {
+        if (response["GameID"]) {
+        console.log("RESPONSE", response);
+            router.push('/game/' + response["GameID"]);
+        }
+    }).catch((error) => {
+        console.log(error);
     })
 }
 </script>
@@ -43,7 +23,7 @@ function startGame() {
         <h1>Game</h1>
         <GameBoard />
         <GameOptions />
-        <button @click="startGame"> Start Game </button>
+        <button @click="clickStart"> Start Game </button>
     </main>
 </template>
 
