@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { sendMove } from '../scripts/websocket.js'
 
 const dragPiece = ref(null);
 const boardRef = ref(null);
@@ -22,6 +22,18 @@ const PieceToIcon = {
     "P": "pb",
     "p": "pw",
 }
+
+const Squares = [
+    "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
+    "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+    "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+    "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+    "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+    "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+    "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+    "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+]
+
 
 function updateBoard(fen) {
     const rows = fen.split("/")
@@ -109,6 +121,8 @@ function dropHandler(ev, n) {
     dragged = null;
 
     // ASK THE SERVER
+    sendMove(Squares[start.value] + Squares[dest.value]);
+
 }
 
 function dragendHandler(ev) {
@@ -137,9 +151,14 @@ function captureHandler(ev) {
             dest.value = Number(ev.target.classList[i].slice(7))
         }
     }
-    // ASK THE SERVER
 
     dragged = null
+    start.value = -1
+    dest.value = -1
+
+    // ASK THE SERVER
+    sendMove(Squares[start.value] + Squares[dest.value]);
+
 }
 
 onMounted(() => {
