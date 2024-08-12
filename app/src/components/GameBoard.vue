@@ -172,8 +172,7 @@ onMounted(() => {
             </div>
         </div>
         <div class="piece kb square-4" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
+            @dragend="dragendHandler($event)"> </div>
         <div class="piece qb square-3" draggable="true" @dragstart="dragstartHandler($event)"
             @dragend="dragendHandler($event)"> </div>
         <div class="piece rb square-7" draggable="true" @dragstart="dragstartHandler($event)"
