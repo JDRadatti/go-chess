@@ -59,7 +59,7 @@ func (ws *WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		go player.write()
 		go player.read()
 	} else {
-		log.Println("unregistered player. must make post request to /play before joining websocket")
+		log.Println("handshake failed")
 	}
 }
 
@@ -90,6 +90,7 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 
 	player, ok := ws.Lobby.GetPlayer(in.PlayerID)
 	if !ok {
+		log.Println("invalid player id", in.PlayerID)
 		return nil, false
 	}
 
