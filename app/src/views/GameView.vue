@@ -1,5 +1,6 @@
 <script setup>
 import GameBoard from '../components/GameBoard.vue'
+import GameSide from '../components/GameSide.vue'
 import { useWebsocket } from '../scripts/websocket.js'
 import { useRoute } from 'vue-router'
 const route = useRoute()
@@ -7,8 +8,11 @@ useWebsocket(route.params.id)
 </script>
 
 <template>
-    <main>
+    <main class="game-container">
         <GameBoard />
+        <div>
+            <GameSide />
+        </div>
     </main>
 </template>
 

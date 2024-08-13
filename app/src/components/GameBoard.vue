@@ -252,14 +252,15 @@ onMounted(() => {
 <style scoped>
 .board-container {
     position: relative;
+    padding: 0 2rem;
 }
 
 .board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     gap: 0;
-    width: calc(var(--square-size)*8);
-    height: calc(var(--square-size)*8)
+    width: var(--board-conainter-size);
+    height: var(--board-container-size);
 }
 
 .drag-hover {

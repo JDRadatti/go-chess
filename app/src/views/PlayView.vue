@@ -9,7 +9,6 @@ const router = useRouter();
 function clickStart() {
     startGame().then((response) => {
         if (response["GameID"]) {
-        console.log("RESPONSE", response);
             router.push('/game/' + response["GameID"]);
         }
     }).catch((error) => {
@@ -19,12 +18,14 @@ function clickStart() {
 </script>
 
 <template>
-    <main>
-        <h1>Game</h1>
+    <main class="game-container">
         <GameBoard />
-        <GameOptions />
-        <button @click="clickStart"> Start Game </button>
+        <div>
+            <GameOptions />
+            <button @click="clickStart"> Start Game </button>
+        </div>
     </main>
 </template>
 
-<style></style>
+<style>
+</style>

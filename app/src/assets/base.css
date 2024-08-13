@@ -20,6 +20,7 @@
     --vt-c-text-dark-1: var(--vt-c-white);
     --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
 
+    --navbar-width: 10ch;
     --purple: #8476ba;
     --white: #f0f1f0;
     --board-container-size: 40vw;
