@@ -3,7 +3,6 @@ import { getPlayerID } from './api.js'
 
 const color = ref("")
 const gameID = ref("")
-const playerID = getPlayerID()
 
 
 let CONN = null;
@@ -32,7 +31,7 @@ export function useWebsocket(id) {
             // Request game and join
             const msg = {
                 action: "join",
-                playerID: playerID,
+                playerID: getPlayerID(),
                 date: Date.now(),
             };
             CONN.send(JSON.stringify(msg));
@@ -47,7 +46,7 @@ export function sendMove(move) {
     if (CONN != null) {
         const msg = {
             Action: "move",
-            PlayerID: playerID,
+            PlayerID: getPlayerID(),
             GameID: gameID.value,
             Move: move,
             date: Date.now(),
