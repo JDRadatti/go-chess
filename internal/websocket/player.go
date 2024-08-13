@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"log"
 )
@@ -27,6 +28,14 @@ func NewPlayer(l *Lobby, conn *websocket.Conn) *Player {
 		Move:   make(chan *Outbound),
 		InGame: make(chan struct{}),
 	}
+}
+
+func GenerateID() string {
+	uuid, err := uuid.NewRandom()
+	if err != nil {
+		log.Printf("error %s", err)
+	}
+	return uuid.String()
 }
 
 // write message from the Game to the websocket
