@@ -22,6 +22,9 @@ export function useWebsocket(id) {
             for (var i = 0; i < messages.length; i++) {
                 var message = messages[i];
                 var parsed = JSON.parse(message)
+                if (parsed.Action == "join success") {
+                    localStorage.setItem("playerID", parsed["PlayerID"])
+                }
                 color.value = parsed["color"];
                 gameID.value = parsed["gameID"];
             }
