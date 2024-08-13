@@ -90,8 +90,15 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 
 	player, ok := ws.Lobby.GetPlayer(in.PlayerID)
 	if !ok {
-		log.Println("invalid player id", in.PlayerID)
-		return nil, false
+		player = NewPlayer(ws.Lobby, conn)
+		player.ID = GenerateID()
+		if game, ok := ws.Lobby.GetGame(ws.GameID); ok {
+			game.addPlayer(player)
+		}
+		if ok = ws.Lobby.AddPlayer(player); !ok {
+			log.Println("invalid player")
+			return nil, false
+		}
 	}
 
 	if player.Game.ID != ws.GameID {
