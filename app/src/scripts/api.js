@@ -1,20 +1,29 @@
 import axios from 'axios'
+import { ref } from 'vue'
 
 const defaultTime = 10
 const defaultIncrement = 0
+const playerID = ref("")
 
 // Get the PlayerID, or retrieve a new PlayerID from the server
 export function getPlayerID() {
-    let playerID = localStorage.getItem("playerID")
-    if (playerID == null) {
-        axios.post("/token").then(response => {
-            playerID = response.data
-            localStorage.setItem("playerID", playerID)
-        }).catch(err => {
-            console.log("error", err)
-        })
+    if (playerID.value != "") {
+        return playerID.value
     }
-    return playerID
+    if (localStorage.getItem("playerID", playerID) != null) {
+        playerID.value = localStorage.getItem("playerID", playerID.value)
+        return playerID.value
+    }
+
+
+    axios.post("/token").then(response => {
+        playerID.value = response.data
+        localStorage.setItem("playerID", playerID.value)
+    }).catch(err => {
+        console.log("error", err)
+    })
+
+    return playerID.value
 };
 
 
