@@ -258,6 +258,8 @@ onMounted(() => {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     gap: 0;
+    width: calc(var(--square-size)*8);
+    height: calc(var(--square-size)*8)
 }
 
 .drag-hover {
