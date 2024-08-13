@@ -93,7 +93,10 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 		player = NewPlayer(ws.Lobby, conn)
 		player.ID = GenerateID()
 		if game, ok := ws.Lobby.GetGame(ws.GameID); ok {
-			game.addPlayer(player)
+			if err = game.addPlayer(player); err != nil {
+			    log.Println("game full")
+				return nil, false
+			}
 		}
 		if ok = ws.Lobby.AddPlayer(player); !ok {
 			log.Println("invalid player")
