@@ -93,49 +93,34 @@ function updateBoard(fen) {
 
 function showAllPieces() {
     for (let i = 0; i < pieceClassList.value.length; i++) {
-        showPiece({ id: i })
+        showPiece(i)
     }
 }
 
 function hideAllPieces() {
     for (let i = 0; i < pieceClassList.value.length; i++) {
-        hidePiece({ id: i })
+        hidePiece(i)
     }
 }
 
-// Update the square at index to piece
-function updateSquare(index, piece) {
-    if (piece in PieceToIcon) {
-        squares.value[index] = PieceToIcon[piece]
-    }
+function updatePieceType(pieceID, pieceIcon) {
+    pieceClassList.value[pieceID][pieceTypeIndex] = PieceToType[pieceIcon]
 }
 
-function showPiece(piece) {
-    if (piece == null) {
-        return
-    }
-    pieceClassList.value[piece.id][pieceHideIndex] = ""
+function showPiece(pieceID) {
+    pieceClassList.value[pieceID][pieceHideIndex] = ""
 }
 
-function hidePiece(piece) {
-    if (piece == null) {
-        return
-    }
-    pieceClassList.value[piece.id][pieceHideIndex] = "hide"
+function hidePiece(pieceID) {
+    pieceClassList.value[pieceID][pieceHideIndex] = "hide"
 }
 
-function movePiece(piece, dest) {
-    if (piece == null) {
-        return
-    }
-    pieceClassList.value[piece.id][pieceSquareIndex] = "square-" + dest
+function movePiece(pieceID, dest) {
+    pieceClassList.value[pieceID][pieceSquareIndex] = "square-" + dest
 }
 
-function getPieceSquareIndex(piece) {
-    if (piece == null) {
-        return
-    }
-    return Number(pieceClassList.value[piece.id][pieceSquareIndex].slice(7))
+function getPieceSquareIndex(pieceID) {
+    return Number(pieceClassList.value[pieceID][pieceSquareIndex].slice(7))
 }
 
 function dragstartHandler(ev) {
@@ -144,9 +129,9 @@ function dragstartHandler(ev) {
     }
 
     dragged = ev.target;
-    hidePiece(dragged);
+    hidePiece(dragged.id);
 
-    start.value = getPieceSquareIndex(dragged);
+    start.value = getPieceSquareIndex(dragged.id);
 
     // Move dragPiece to the cursor position. 
     // This is because default drag creates an undesired opacity 
@@ -188,8 +173,8 @@ function dropHandler(ev, n) {
 
     ev.target.classList.remove("drag-hover")
     dest.value = n - 1
-    movePiece(dragged, dest.value)
-    showPiece(dragged)
+    movePiece(dragged.id, dest.value)
+    showPiece(dragged.id)
     dragged = null;
 
     // ASK THE SERVER
@@ -198,10 +183,10 @@ function dropHandler(ev, n) {
 }
 
 function dragendHandler(ev) {
-    showPiece(dragged)
-    start.value = -1;
-    dest.value = -1;
-    dragged = null;
+    if (dragged != null) {
+        showPiece(dragged.id)
+        dragged = null;
+    }
 
     dragPiece.value.classList.remove(dragPiece.value.classList[dragPiece.value.classList.length - 1]);
     dragPiece.value.classList.add("hide");
@@ -216,15 +201,13 @@ function dragoverHandler(ev) {
 function captureHandler(ev) {
 
     ev.preventDefault();
-    dest.value = getPieceSquareIndex(ev.target)
+    dest.value = getPieceSquareIndex(ev.target.id)
 
     // ASK THE SERVER
     sendMove(Squares[start.value] + Squares[dest.value]);
 
-    showPiece(dragged)
+    showPiece(dragged.id)
     dragged = null
-    start.value = -1
-    dest.value = -1
 }
 
 onMounted(() => {
