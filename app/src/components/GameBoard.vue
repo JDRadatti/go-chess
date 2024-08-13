@@ -4,6 +4,43 @@ import { sendMove } from '../scripts/websocket.js'
 
 const dragPiece = ref(null);
 const boardRef = ref(null);
+const pieceClassList = ref([
+    ["piece", "qb", "square-3", ""],
+    ["piece", "kb", "square-4", ""],
+    ["piece", "rb", "square-7", ""],
+    ["piece", "rb", "square-0", ""],
+    ["piece", "bb", "square-5", ""],
+    ["piece", "bb", "square-2", ""],
+    ["piece", "nb", "square-6", ""],
+    ["piece", "nb", "square-1", ""],
+    ["piece", "pb", "square-8", ""],
+    ["piece", "pb", "square-9", ""],
+    ["piece", "pb", "square-10", ""],
+    ["piece", "pb", "square-11", ""],
+    ["piece", "pb", "square-12", ""],
+    ["piece", "pb", "square-13", ""],
+    ["piece", "pb", "square-14", ""],
+    ["piece", "pb", "square-15", ""],
+    ["piece", "kw", "square-60", ""],
+    ["piece", "qw", "square-59", ""],
+    ["piece", "rw", "square-56", ""],
+    ["piece", "rw", "square-63", ""],
+    ["piece", "bw", "square-58", ""],
+    ["piece", "bw", "square-61", ""],
+    ["piece", "nw", "square-62", ""],
+    ["piece", "nw", "square-57", ""],
+    ["piece", "pw", "square-48", ""],
+    ["piece", "pw", "square-49", ""],
+    ["piece", "pw", "square-50", ""],
+    ["piece", "pw", "square-51", ""],
+    ["piece", "pw", "square-52", ""],
+    ["piece", "pw", "square-53", ""],
+    ["piece", "pw", "square-54", ""],
+    ["piece", "pw", "square-55", ""],
+])
+
+const pieceSquareIndex = 2
+const pieceHideIndex = 3
 const start = ref(-1);
 const dest = ref(-1);
 let dragged = null;
@@ -60,19 +97,43 @@ function updateSquare(index, piece) {
     }
 }
 
+function showPiece(piece) {
+    if (piece == null) {
+        return
+    }
+    pieceClassList.value[piece.id][pieceHideIndex] = ""
+}
+
+function hidePiece(piece) {
+    if (piece == null) {
+        return
+    }
+    pieceClassList.value[piece.id][pieceHideIndex] = "hide"
+}
+
+function movePiece(piece, dest) {
+    if (piece == null) {
+        return
+    }
+    pieceClassList.value[piece.id][pieceSquareIndex] = "square-" + dest
+}
+
+function getPieceSquareIndex(piece) {
+    if (piece == null) {
+        return
+    }
+    return Number(pieceClassList.value[piece.id][pieceSquareIndex].slice(7))
+}
+
 function dragstartHandler(ev) {
     if (dragged != null) {
         return
     }
 
-    dragged = ev.target
-    for (let i = 0; i < dragged.classList.length; i++) {
-        if (dragged.classList[i].startsWith('square-')) {
-            start.value = Number(dragged.classList[i].slice(7))
-        }
-    }
+    dragged = ev.target;
+    hidePiece(dragged);
 
-    ev.target.classList.add("hide");
+    start.value = getPieceSquareIndex(dragged);
 
     // Move dragPiece to the cursor position. 
     // This is because default drag creates an undesired opacity 
@@ -111,13 +172,11 @@ function dropHandler(ev, n) {
     }
     ev.preventDefault();
     ev.dataTransfer.dropEffect = "move";
+
     ev.target.classList.remove("drag-hover")
     dest.value = n - 1
-    if (dragged != null) {
-        dragged.classList.remove("square-" + start.value);
-        dragged.classList.add("square-" + dest.value);
-        dragged.classList.remove("hide");
-    }
+    movePiece(dragged, dest.value)
+    showPiece(dragged)
     dragged = null;
 
     // ASK THE SERVER
@@ -126,12 +185,10 @@ function dropHandler(ev, n) {
 }
 
 function dragendHandler(ev) {
-    if (dragged != null) {
-        dragged.classList.remove("hide");
-        start.value = -1;
-        dest.value = -1;
-        dragged = null;
-    }
+    showPiece(dragged)
+    start.value = -1;
+    dest.value = -1;
+    dragged = null;
 
     dragPiece.value.classList.remove(dragPiece.value.classList[dragPiece.value.classList.length - 1]);
     dragPiece.value.classList.add("hide");
@@ -146,19 +203,12 @@ function dragoverHandler(ev) {
 function captureHandler(ev) {
 
     ev.preventDefault();
-    for (let i = 0; i < ev.target.classList.length; i++) {
-        if (ev.target.classList[i].startsWith('square-')) {
-            dest.value = Number(ev.target.classList[i].slice(7))
-        }
-    }
+    dest.value = getPieceSquareIndex(ev.target)
 
     // ASK THE SERVER
     sendMove(Squares[start.value] + Squares[dest.value]);
 
-    if (dragged != null) {
-        dragged.classList.remove("hide")
-    }
-
+    showPiece(dragged)
     dragged = null
     start.value = -1
     dest.value = -1
@@ -193,101 +243,9 @@ onMounted(() => {
                 @dragenter.prevent>
             </div>
         </div>
-        <div class="piece kb square-4" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece qb square-3" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece rb square-7" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece rb square-0" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece bb square-5" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece bb square-2" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece nb square-6" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece nb square-1" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pb square-8" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pb square-9" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pb square-10" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pb square-11" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pb square-12" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pb square-13" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pb square-14" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pb square-15" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece kw square-60" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece qw square-59" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece rw square-56" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece rw square-63" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece bw square-58" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece bw square-61" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece nw square-62" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece nw square-57" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pw square-48" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pw square-49" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pw square-50" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pw square-51" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pw square-52" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pw square-53" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pw square-54" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
-        </div>
-        <div class="piece pw square-55" draggable="true" @dragstart="dragstartHandler($event)"
-            @dragend="dragendHandler($event)" @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
+        <div v-for="(classList, index) in pieceClassList" :class="classList" :key="index" :id="index" draggable="true"
+            @dragstart="dragstartHandler($event)" @dragend="dragendHandler($event)" @drop="captureHandler($event)"
+            @dragover.prevent @dragenter.prevent>
         </div>
     </div>
 </template>
