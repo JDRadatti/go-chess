@@ -17,18 +17,6 @@ export function useWebsocket(id) {
         CONN.error = function(event) {
             CONN = null;
         };
-        CONN.onmessage = function(event) {
-            var messages = event.data.split('\n');
-            for (var i = 0; i < messages.length; i++) {
-                var message = messages[i];
-                var parsed = JSON.parse(message)
-                if (parsed.Action == "join success") {
-                    localStorage.setItem("playerID", parsed["PlayerID"])
-                }
-                color.value = parsed["color"];
-                gameID.value = parsed["gameID"];
-            }
-        };
 
         CONN.onopen = function(event) {
             // Request game and join
@@ -42,6 +30,7 @@ export function useWebsocket(id) {
     } else {
         console.log("Your browser does not support WebSockets.")
     }
+    return CONN
 }
 
 

@@ -1,6 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { sendMove } from '../scripts/websocket.js'
+
+const props = defineProps(['start', 'color', 'status'])
 
 const dragPiece = ref(null);
 const boardRef = ref(null);
@@ -214,8 +216,6 @@ function captureHandler(ev) {
 }
 
 onMounted(() => {
-    //updateBoard("RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr") // white on bottom starting position
-    //updateBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") // black on bottom starting position
     const squareElements = document.querySelectorAll('.square')
     var rank = 0
     for (let i = 0; i < squareElements.length; i++) {
@@ -228,12 +228,21 @@ onMounted(() => {
             squareElements[i].classList.add("light")
         }
     }
-
+    hideAllPieces()
 });
+
+watch(props, (props) => {
+    if (props.start) {
+        updateBoard("RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr")
+        showAllPieces()
+    }
+})
+
 
 </script>
 
 <template>
+    <div> {{ props.start }} {{ props.color }}</div>
     <div inert class="drag unselectable hide" draggable="false" ref="dragPiece"></div>
     <div class="board-container" @dragover="dragoverHandler($event)" @dragenter.prevent @dragover.prevent>
         <div class="board" draggable="false">
