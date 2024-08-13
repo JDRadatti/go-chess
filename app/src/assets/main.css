@@ -7,9 +7,9 @@
 }
 
 a,
-.green {
+.color-primary {
     text-decoration: none;
-    color: hsla(160, 100%, 37%, 1);
+    color: var(--color-primary);
     transition: 0.4s;
     padding: 3px;
 }
@@ -21,13 +21,13 @@ a,
 }
 
 .game-side-container {
-    width: cale(class="board-side-container"var(--board-container-size) * 0.7);
+    width: cale(class="board-side-container" var(--board-container-size) * 0.7);
     padding: 0 2rem;
 }
 
 @media (hover: hover) {
     a:hover {
-        background-color: hsla(160, 100%, 37%, 0.2);
+        background-color: var(--color-primary-hover);
     }
 }
 
