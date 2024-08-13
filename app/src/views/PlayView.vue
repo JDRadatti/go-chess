@@ -1,8 +1,9 @@
 <script setup>
 import GameBoard from '../components/GameBoard.vue'
 import GameOptions from '../components/GameOptions.vue'
-import { startGame } from '../scripts/api.js'
+import { startGame, getPlayerID } from '../scripts/api.js'
 import { useRouter } from 'vue-router'
+import {onMounted} from 'vue'
 
 const router = useRouter();
 
@@ -15,6 +16,10 @@ function clickStart() {
         console.log(error);
     })
 }
+
+onMounted(() => {
+    getPlayerID()
+})
 </script>
 
 <template>
