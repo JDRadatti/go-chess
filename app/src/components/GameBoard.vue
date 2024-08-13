@@ -46,7 +46,7 @@ const start = ref(-1);
 const dest = ref(-1);
 let dragged = null;
 
-const PieceToIcon = {
+const PieceToType = {
     "B": "bb",
     "b": "bw",
     "R": "rb",
