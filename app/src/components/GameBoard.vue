@@ -39,6 +39,7 @@ const pieceClassList = ref([
     ["piece", "pw", "square-55", ""],
 ])
 
+const pieceTypeIndex = 1
 const pieceSquareIndex = 2
 const pieceHideIndex = 3
 const start = ref(-1);
@@ -87,6 +88,18 @@ function updateBoard(fen) {
                 index++
             }
         }
+    }
+}
+
+function showAllPieces() {
+    for (let i = 0; i < pieceClassList.value.length; i++) {
+        showPiece({ id: i })
+    }
+}
+
+function hideAllPieces() {
+    for (let i = 0; i < pieceClassList.value.length; i++) {
+        hidePiece({ id: i })
     }
 }
 
