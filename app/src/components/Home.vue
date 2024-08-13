@@ -3,7 +3,7 @@
 
 <template>
   <div>
-    <h1 class="green">Welcome</h1>
+    <h1 class="color-primary">Welcome</h1>
   </div>
 </template>
 

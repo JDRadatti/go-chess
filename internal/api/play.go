@@ -24,7 +24,6 @@ type GameAccepted struct {
 
 // HandlePlay handles online game requests
 func HandlePlay(w http.ResponseWriter, r *http.Request, lobby *websocket.Lobby) {
-
 	var gameRequest *GameRequest = &GameRequest{}
 	err := json.NewDecoder(r.Body).Decode(gameRequest)
 	if err != nil {
@@ -59,4 +58,7 @@ func HandlePlay(w http.ResponseWriter, r *http.Request, lobby *websocket.Lobby) 
 	if _, err := w.Write(marshled); err != nil {
 		log.Printf("error: %v", err)
 	}
+    log.Println("recieved", gameRequest)
+    log.Println("send", payload)
+
 }

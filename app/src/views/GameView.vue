@@ -1,87 +1,23 @@
 <script setup>
 import GameBoard from '../components/GameBoard.vue'
-import { ref } from 'vue'
+import GameSide from '../components/GameSide.vue'
+import { useWebsocket } from '../scripts/websocket.js'
 import { useRoute } from 'vue-router'
-import axios from 'axios'
+import { onMounted } from 'vue'
 
-const move = ref("")
-const gameID = ref("")
-const playerID = ref("")
-const color = ref("")
-var connected = false
 const route = useRoute()
 
-playerID.value = localStorage.getItem("playerID")
-
-if (window["WebSocket"]) {
-    var conn = new WebSocket("ws://" + document.location.host + "/game/" + route.params.id);
-    conn.onclose = function (event) {
-        var item = document.createElement("div");
-        item.innerHTML = "<b>Connection closed.</b>";
-        connected = false
-        console.log("CLOSED")
-    };
-
-    conn.error = function (event) {
-        var item = document.createElement("div");
-        item.innerHTML = "<b>ERROR</b>";
-        connected = false
-        console.log("ERROR")
-    };
-    conn.onmessage = function (event) {
-        var messages = event.data.split('\n');
-        for (var i = 0; i < messages.length; i++) {
-            var message = messages[i];
-            var parsed = JSON.parse(message)
-            color.value = parsed["color"];
-            gameID.value = parsed["gameID"];
-            playerID.value = parsed["playerID"];
-        }
-    };
-
-    conn.onopen = function (event) {
-        // Request game and join
-        connected = true
-        const msg = {
-            action: "join",
-            playerID: playerID.value,
-            date: Date.now(),
-        };
-        conn.send(JSON.stringify(msg));
-    }
-
-
-} else {
-    var item = document.createElement("div");
-    item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
-    console.log(item);
-}
-
-function sendMove() {
-    if (connected) {
-        const msg = {
-            Action: "move",
-            PlayerID: playerID.value,
-            GameID: gameID.value,
-            Move: move.value,
-            date: Date.now(),
-        };
-        conn.send(JSON.stringify(msg));
-    }
-}
+onMounted(() => {
+    useWebsocket(route.params.id)
+})
 </script>
 
 <template>
-    <main>
-        <h1>Game</h1>
+    <main class="game-container">
         <GameBoard />
-        <form>
-            <input v-model="move" placeholder="Make Move"></input>
-        </form>
-        <button @click="sendMove">Send</button>
-        <p>Previous move: {{ move }}</p>
-        <p>PlayerID: {{ playerID }}</p>
-        <p>GameID: {{ gameID }}</p>
+        <div>
+            <GameSide />
+        </div>
     </main>
 </template>
 

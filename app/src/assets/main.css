@@ -1,35 +1,43 @@
 @import './base.css';
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+    margin: 0 auto auto var(--navbar-width);
+    padding: 2rem;
+    font-weight: normal;
 }
 
 a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+.color-primary {
+    text-decoration: none;
+    color: var(--color-primary);
+    transition: 0.4s;
+    padding: 3px;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.game-side-container {
+    width: cale(class="board-side-container" var(--board-container-size) * 0.7);
+    padding: 0 2rem;
 }
 
 @media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+    a:hover {
+        background-color: var(--color-primary-hover);
+    }
 }
 
 @media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
+    body {
+        display: flex;
+        justify-content: space;
+    }
 
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+    #app {
+        display: flex;
+    }
 }
