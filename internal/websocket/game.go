@@ -52,6 +52,7 @@ func (g *Game) addPlayer(p *Player) error {
 	if g.White != nil && g.Black != nil {
 		close(g.Start) // Tell game to start
 	}
+	p.Game = g
 	return nil
 }
 
