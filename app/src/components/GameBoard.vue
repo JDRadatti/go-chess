@@ -140,8 +140,8 @@ function dragstartHandler(ev) {
     if (dragPiece.value.classList[dragPiece.value.classList.length - 1] == "hide") {
         dragPiece.value.classList.add(dragged.classList[1]);
         dragPiece.value.classList.remove(dragPiece.value.classList[dragPiece.value.classList.length - 2]);
-        dragPiece.value.style.setProperty('--cursor-y', ev.clientY - dragPiece.value.offsetWidth / 2 + "px");
-        dragPiece.value.style.setProperty('--cursor-x', ev.clientX - dragPiece.value.offsetWidth / 2 + "px");
+        dragPiece.value.style.setProperty('--cursor-y', ev.pageY - dragPiece.value.offsetWidth / 2 + "px");
+        dragPiece.value.style.setProperty('--cursor-x', ev.pageX - dragPiece.value.offsetWidth / 2 + "px");
     }
     return
 }
@@ -196,8 +196,8 @@ function dragendHandler(ev) {
 
 function dragoverHandler(ev) {
     // Note: the piece should always be the last element in the dragPiece's classList
-    dragPiece.value.style.setProperty('--cursor-y', ev.clientY - dragPiece.value.offsetWidth / 2 + "px");
-    dragPiece.value.style.setProperty('--cursor-x', ev.clientX - dragPiece.value.offsetWidth / 2 + "px");
+    dragPiece.value.style.setProperty('--cursor-y', ev.pageY - dragPiece.value.offsetWidth / 2 + "px");
+    dragPiece.value.style.setProperty('--cursor-x', ev.pageX - dragPiece.value.offsetWidth / 2 + "px");
 }
 
 function captureHandler(ev) {
