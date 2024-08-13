@@ -234,7 +234,6 @@ onMounted(() => {
 </script>
 
 <template>
-    <h1 class="green">{{ start }} {{ dest }}</h1>
     <div inert class="drag unselectable hide" draggable="false" ref="dragPiece"></div>
     <div class="board-container" @dragover="dragoverHandler($event)" @dragenter.prevent @dragover.prevent>
         <div class="board" draggable="false">
