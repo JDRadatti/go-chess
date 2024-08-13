@@ -87,11 +87,11 @@ func (g *Game) play() {
 			switch pid {
 			case g.White.ID:
 				if len(g.AllMoves)%2 != 0 { // white moves on evens
-                    continue // skip moves out of order
-				} 
+					continue // skip moves out of order
+				}
 			case g.Black.ID:
 				if len(g.AllMoves)%2 != 1 { // black moves on odds
-                    continue // skip moves out of order
+					continue // skip moves out of order
 				}
 			default:
 				log.Println("invalid playerID")
@@ -101,11 +101,11 @@ func (g *Game) play() {
 			// right now, just relay move to both players
 			out := &Outbound{
 				Action:   MOVE,
-                Move: moveRequest.Move,
+				Move:     moveRequest.Move,
 				PlayerID: pid, // Player who made the move
 				GameID:   g.ID,
 			}
-            g.AllMoves = append(g.AllMoves, out.Move)
+			g.AllMoves = append(g.AllMoves, out.Move)
 			g.White.Move <- out
 			g.Black.Move <- out
 		default:
