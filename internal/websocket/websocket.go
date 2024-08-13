@@ -17,6 +17,7 @@ const (
 
 const (
 	JOIN_SUCCESS = "join success"
+	JOIN_FAIL = "join fail"
 )
 
 type Inbound struct {
@@ -59,7 +60,19 @@ func (ws *WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		go player.write()
 		go player.read()
 	} else {
-		log.Println("handshake failed")
+		// Send join fail
+		defer conn.Close()
+		joinSuccess := &Outbound{
+			Action: JOIN_FAIL,
+		}
+		message, err := json.Marshal(joinSuccess)
+		if err != nil {
+			return
+		}
+
+		if err := conn.WriteMessage(messageType, []byte(message)); err != nil {
+			log.Printf("error: %v", err)
+		}
 	}
 }
 
@@ -79,12 +92,10 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 	err = json.Unmarshal(message, in)
 	if err != nil {
 		log.Printf("error: %v", err)
-		conn.Close()
 		return nil, false
 	}
 	if in.Action != JOIN {
 		log.Printf("action must be join")
-		conn.Close()
 		return nil, false
 	}
 
@@ -94,7 +105,7 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 		player.ID = GenerateID()
 		if game, ok := ws.Lobby.GetGame(ws.GameID); ok {
 			if err = game.addPlayer(player); err != nil {
-			    log.Println("game full")
+				log.Println("game full")
 				return nil, false
 			}
 		}
@@ -106,7 +117,6 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 
 	if player.Game.ID != ws.GameID {
 		log.Println("invalid game id")
-		conn.Close()
 		return nil, false
 	}
 
@@ -119,7 +129,6 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 	message, err = json.Marshal(joinSuccess)
 	if err != nil {
 		log.Println("server error")
-		conn.Close()
 		return nil, false
 	}
 
