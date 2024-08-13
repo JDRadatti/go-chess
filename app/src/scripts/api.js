@@ -10,21 +10,21 @@ export function getPlayerID() {
     if (playerID.value != "") {
         return playerID.value
     }
-    if (localStorage.getItem("playerID", playerID) != null) {
-        playerID.value = localStorage.getItem("playerID", playerID.value)
+    if (localStorage.getItem("playerID") != null) {
+        playerID.value = localStorage.getItem("playerID")
         return playerID.value
     }
 
+    return playerID.value
+}
 
+export function setPlayerID() {
     axios.post("/token").then(response => {
-        playerID.value = response.data
-        localStorage.setItem("playerID", playerID.value)
+        localStorage.setItem("playerID", response.data)
     }).catch(err => {
         console.log("error", err)
     })
-
-    return playerID.value
-};
+}
 
 
 export async function startGame(time, increment) {

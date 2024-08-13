@@ -1,7 +1,7 @@
 <script setup>
 import GameBoard from '../components/GameBoard.vue'
 import GameOptions from '../components/GameOptions.vue'
-import { startGame, getPlayerID } from '../scripts/api.js'
+import { startGame, setPlayerID } from '../scripts/api.js'
 import { useRouter } from 'vue-router'
 import {onMounted} from 'vue'
 
@@ -18,7 +18,7 @@ function clickStart() {
 }
 
 onMounted(() => {
-    getPlayerID()
+    setPlayerID()
 })
 </script>
 
