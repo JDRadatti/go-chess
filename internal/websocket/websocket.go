@@ -17,7 +17,7 @@ const (
 
 const (
 	JOIN_SUCCESS = "join success"
-	JOIN_FAIL = "join fail"
+	JOIN_FAIL    = "join fail"
 )
 
 type Inbound struct {
@@ -125,6 +125,7 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 		Action:   JOIN_SUCCESS,
 		PlayerID: player.ID,
 		GameID:   player.Game.ID,
+		Color:    player.Game.ColorFromPID(player.ID),
 	}
 	message, err = json.Marshal(joinSuccess)
 	if err != nil {
