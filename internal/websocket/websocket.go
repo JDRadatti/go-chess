@@ -18,6 +18,7 @@ const (
 const (
 	JOIN_SUCCESS = "join success"
 	JOIN_FAIL    = "join fail"
+	GAME_START   = "game start"
 )
 
 type Inbound struct {
@@ -25,7 +26,7 @@ type Inbound struct {
 	Move     string
 	PlayerID string
 	GameID   string
-	Time     time.Duration
+	Time     time.Time
 	Color    int
 }
 
@@ -34,7 +35,7 @@ type Outbound struct {
 	Move     string
 	PlayerID string
 	GameID   string
-	Time     time.Duration
+	Time     time.Time
 	Color    int
 	Message  string
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"log"
+	"time"
 )
 
 type Player struct {
@@ -43,6 +44,20 @@ func GenerateID() string {
 // concurrent write errors
 func (p *Player) write() {
 	<-p.Game.Start // wait for game to start
+	message, err := json.Marshal(&Outbound{
+		Action: GAME_START,
+		GameID: p.Game.ID,
+		Time:   time.Now(),
+	})
+	if err != nil {
+		log.Printf("error: %v", err)
+		return
+	}
+	if err := p.Conn.WriteMessage(messageType, []byte(message)); err != nil {
+		log.Printf("error: %v", err)
+		return
+	}
+
 	for {
 		select {
 		case out := <-p.Move:
