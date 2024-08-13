@@ -75,19 +75,22 @@ const Squares = [
 
 function updateBoard(fen) {
     const rows = fen.split("/")
-    var index = 0
+    var squareIndex = 0
+    var pieceIndex = 0
     for (let i = 0; i < rows.length; i++) { // must be 8 rows
         for (let j = 0; j < rows[i].length; j++) {
             if (!isNaN(rows[i][j])) {
-                for (let k = Number(rows[i][j]); k > 0; k--) {
-                    updateSquare(index, "")
-                    index++
-                }
+                squareIndex += Number(rows[i][j])
             } else {
-                updateSquare(index, rows[i][j])
-                index++
+                updatePieceType(pieceIndex, rows[i][j])
+                movePiece(pieceIndex, squareIndex)
+                squareIndex++
+                pieceIndex++
             }
         }
+    }
+    for (let i = pieceIndex; i < pieceClassList.value.length; i++) {
+        hidePiece(i)
     }
 }
 
@@ -211,7 +214,8 @@ function captureHandler(ev) {
 }
 
 onMounted(() => {
-    //updateBoard("RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr")
+    //updateBoard("RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr") // white on bottom starting position
+    //updateBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") // black on bottom starting position
     const squareElements = document.querySelectorAll('.square')
     var rank = 0
     for (let i = 0; i < squareElements.length; i++) {
