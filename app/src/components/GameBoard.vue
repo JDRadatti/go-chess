@@ -251,7 +251,6 @@ watch(props, (props) => {
 </script>
 
 <template>
-    <div> {{ props.start }} {{ props.color }}</div>
     <div inert class="drag unselectable hide" draggable="false" ref="dragPiece"></div>
     <div class="board-container" @dragover="dragoverHandler($event)" @dragenter.prevent @dragover.prevent>
         <div class="spinner-container" v-if="waiting">

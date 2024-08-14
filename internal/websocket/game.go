@@ -86,7 +86,6 @@ func (g *Game) play() {
 
 			pid := moveRequest.PlayerID
 			if !g.ValidPID(pid) {
-				log.Println("INVALID PLAYER")
 				goto SEND_ERROR
 			} else {
 
