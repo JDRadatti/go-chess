@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/JDRadatti/reptile/internal/chess"
 	"github.com/JDRadatti/reptile/internal/websocket"
 	"github.com/google/uuid"
 	"log"
@@ -19,7 +20,7 @@ type GameRequest struct {
 type GameAccepted struct {
 	PlayerID string
 	GameID   string
-	Color    int
+	Color    chess.Player
 }
 
 // HandlePlay handles online game requests
@@ -58,7 +59,4 @@ func HandlePlay(w http.ResponseWriter, r *http.Request, lobby *websocket.Lobby) 
 	if _, err := w.Write(marshled); err != nil {
 		log.Printf("error: %v", err)
 	}
-    log.Println("recieved", gameRequest)
-    log.Println("send", payload)
-
 }
