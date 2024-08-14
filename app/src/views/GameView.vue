@@ -18,7 +18,8 @@ const fen = ref("")
 onMounted(() => {
     let CONN = useWebsocket(route.params.id)
     if (CONN == null) {
-        console.log("failed to connect to websocket")
+        alert("failed to connect to websocket")
+        router.push('/play')
     }
     CONN.onmessage = function (event) {
         var messages = event.data.split('\n');
