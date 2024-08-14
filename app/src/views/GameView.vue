@@ -14,6 +14,7 @@ const started = ref(false)
 const waiting = ref(false)
 const move = ref("")
 const fen = ref("")
+const gameOver = ref(false)
 const messageCount = ref(0)
 
 onMounted(() => {
@@ -42,6 +43,8 @@ onMounted(() => {
             } else if (parsed.Action == "join fail") {
                 alert("game full... redirecting")
                 router.push('/play')
+            } else if (parsed.Action == "game over") {
+                gameOver.value = true
             }
             messageCount.value++
         }
@@ -53,7 +56,8 @@ onMounted(() => {
 
 <template>
     <main class="game-container">
-        <GameBoard :start="started" :color="color" :waiting="waiting" :fen="fen" :count="messageCount" />
+        <GameBoard :start="started" :color="color" :waiting="waiting" :fen="fen" :count="messageCount"
+            :over="gameOver" />
         <div>
             <GameSide />
         </div>
