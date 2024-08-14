@@ -57,15 +57,19 @@ func (g *Game) addPlayer(p *Player) error {
 	return nil
 }
 
-func (g *Game) ColorFromPID(pid string) int {
+func (g *Game) ColorFromPID(pid string) chess.Player {
 	if g.White != nil && g.White.ID == pid {
-		return WHITE
+		return chess.WHITE
 	} else if g.Black != nil && g.Black.ID == pid {
-		return BLACK
+		return chess.BLACK
 	} else {
 		log.Printf("Player ID not found %s", pid)
-		return ERROR
+		return chess.INVALID_PLAYER
 	}
+}
+
+func (g *Game) ValidPID(pid string) bool {
+	return pid == g.White.ID || pid == g.Black.ID && g.ColorFromPID(pid) == g.Board.Turn()
 }
 
 func (g *Game) String() string {
@@ -80,28 +84,43 @@ func (g *Game) play() {
 		case moveRequest := <-g.Moves:
 
 			pid := moveRequest.PlayerID
-			if pid != g.White.ID && pid != g.Black.ID {
-				log.Println("invalid move: invalid playerID")
-				break
-			}
+			if !g.ValidPID(pid) {
+				goto SEND_ERROR
+			} else {
 
-			// try move
-			move, valid := g.Board.Move(moveRequest.Move)
-			if !valid {
-				break
-			}
+				// try move
+				move, valid := g.Board.Move(moveRequest.Move)
+				if valid {
+					out := &Outbound{
+						Action:   MOVE,
+						Move:     move,
+						PlayerID: pid, // Player who made the move
+						GameID:   g.ID,
+						FEN:      string(g.Board.FEN()),
+					}
 
+					// relay move to both players
+					g.White.Move <- out
+					g.Black.Move <- out
+				} else {
+					log.Println("INVALID MOVE")
+					goto SEND_ERROR
+				}
+			}
+		SEND_ERROR:
 			out := &Outbound{
-				Action:   MOVE,
-				Move:     move,
+				Action:   INVALID_MOVE,
+				Move:     "",
 				PlayerID: pid, // Player who made the move
 				GameID:   g.ID,
 				FEN:      string(g.Board.FEN()),
 			}
+			if pid == g.White.ID {
+				g.White.Move <- out
+			} else {
+				g.Black.Move <- out
+			}
 
-			// relay move to both players
-			g.White.Move <- out
-			g.Black.Move <- out
 		default:
 			continue
 		}
