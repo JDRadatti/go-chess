@@ -3,7 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { sendMove } from '../scripts/websocket.js'
 import { VueSpinnerBox } from 'vue3-spinners';
 
-const props = defineProps(['start', 'color', 'waiting', 'fen', 'count'])
+const props = defineProps(['start', 'color', 'waiting', 'fen', 'count', 'over'])
 
 const waiting = ref(false)
 const dragPiece = ref(null);
@@ -266,6 +266,10 @@ watch(props, (props) => {
 
     if (props.waiting) {
         waiting.value = true // start spinner
+    }
+
+    if (props.over) {
+        alert("game over")
     }
 })
 </script>
