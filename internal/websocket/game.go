@@ -22,7 +22,8 @@ type Game struct {
 	Moves     chan *Inbound // Moves requests sent from both white and black
 	Board     *chess.Board
 	Start     chan struct{}
-	Time      int // number of seconds in the game
+	WhiteTime int // number of seconds in the game for white
+	BlackTime int
 	Increment int // number of seconds to add when player moves
 	Lobby     *Lobby
 }
@@ -48,7 +49,8 @@ func newGame(l *Lobby, time int, increment int) *Game {
 		Moves:     make(chan *Inbound),
 		Start:     make(chan struct{}),
 		Board:     &board,
-		Time:      time,
+		WhiteTime: time,
+		BlackTime: time,
 		Increment: increment,
 		Lobby:     l,
 	}
@@ -112,7 +114,8 @@ func (g *Game) play() {
 	for {
 		select {
 		case <-ticker.C:
-			if g.Time < 0 {
+			if g.Board.Turn() == chess.WHITE && g.WhiteTime < 0 ||
+				g.Board.Turn() == chess.BLACK && g.BlackTime < 0 {
 				// game over
 				out := g.Out(GAME_OVER, "", "", "on time")
 				g.Lobby.Clean(g.ID, g.White.ID, g.Black.ID)
@@ -120,7 +123,11 @@ func (g *Game) play() {
 				g.Black.Move <- out
 				return
 			}
-			g.Time -= 1 + g.Increment
+			if g.Board.Turn() == chess.WHITE {
+				g.WhiteTime -= 1 + g.Increment
+			} else {
+				g.BlackTime -= 1 + g.Increment
+			}
 		case moveRequest := <-g.Moves:
 
 			pid := moveRequest.PlayerID

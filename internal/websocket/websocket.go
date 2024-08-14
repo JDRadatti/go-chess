@@ -133,7 +133,7 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 		PlayerID:  player.ID,
 		GameID:    player.Game.ID,
 		Color:     player.Game.ColorFromPID(player.ID),
-		Time:      player.Game.Time,
+		Time:      player.Game.WhiteTime,
 		Increment: player.Game.Increment,
 	}
 	message, err = json.Marshal(joinSuccess)
