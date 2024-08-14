@@ -3,6 +3,7 @@ package websocket
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
+	"github.com/JDRadatti/reptile/internal/chess"
 	"log"
 	"net/http"
 	"time"
@@ -11,8 +12,9 @@ import (
 type Action string
 
 const (
-	JOIN Action = "join"
-	MOVE Action = "move"
+	JOIN         Action = "join"
+	MOVE         Action = "move"
+	INVALID_MOVE Action = "invalid move"
 )
 
 const (
@@ -37,7 +39,7 @@ type Outbound struct {
 	PlayerID string
 	GameID   string
 	Time     time.Time
-	Color    int
+	Color    chess.Player
 	Message  string
 }
 
