@@ -3,6 +3,7 @@ package websocket
 import (
 	"errors"
 	"fmt"
+	"github.com/JDRadatti/reptile/internal/chess"
 	"github.com/google/uuid"
 	"log"
 )
@@ -10,12 +11,12 @@ import (
 type State int8
 
 type Game struct {
-	ID       string
-	White    *Player
-	Black    *Player
-	Moves    chan *Inbound // Moves requests sent from both white and black
-	AllMoves []string
-	Start    chan struct{}
+	ID    string
+	White *Player
+	Black *Player
+	Moves chan *Inbound // Moves requests sent from both white and black
+	Board chess.Board
+	Start chan struct{}
 }
 
 const (
@@ -32,10 +33,10 @@ func newGame() *Game {
 	}
 
 	newGame := &Game{
-		ID:       gameID.String()[:8],
-		Moves:    make(chan *Inbound),
-		Start:    make(chan struct{}),
-		AllMoves: []string{},
+		ID:    gameID.String()[:8],
+		Moves: make(chan *Inbound),
+		Start: make(chan struct{}),
+		Board: chess.NewBoardClassic(),
 	}
 	go newGame.play()
 	return newGame
@@ -69,44 +70,36 @@ func (g *Game) ColorFromPID(pid string) int {
 
 func (g *Game) String() string {
 	return fmt.Sprintf("white: %s, black %s \n moves: %v",
-		g.White.ID, g.Black.ID, g.AllMoves)
+		g.White.ID, g.Black.ID)
 }
 
 func (g *Game) play() {
-	log.Println("waiting for game to start")
 	<-g.Start // Wait for game to start
-	log.Println("game started")
 	for {
 		select {
 		case moveRequest := <-g.Moves:
-			// check player id
-			// check game id
-			// check if valid player move
-			// call gamelogic module to check for valid gamelogic
+
 			pid := moveRequest.PlayerID
-			switch pid {
-			case g.White.ID:
-				if len(g.AllMoves)%2 != 0 { // white moves on evens
-					continue // skip moves out of order
-				}
-			case g.Black.ID:
-				if len(g.AllMoves)%2 != 1 { // black moves on odds
-					continue // skip moves out of order
-				}
-			default:
-				log.Println("invalid playerID")
-				return
+			if pid != g.White.ID && pid != g.Black.ID {
+				log.Println("invalid move: invalid playerID")
+				break
 			}
 
-			// right now, just relay move to both players
+			// try move
+			move, valid := g.Board.Move(moveRequest.Move)
+			if !valid {
+				break
+			}
+
 			out := &Outbound{
 				Action:   MOVE,
-				Move:     moveRequest.Move,
+				Move:     move,
 				PlayerID: pid, // Player who made the move
 				GameID:   g.ID,
-				FEN:      "",
+				FEN:      string(g.Board.FEN()),
 			}
-			g.AllMoves = append(g.AllMoves, out.Move)
+
+			// relay move to both players
 			g.White.Move <- out
 			g.Black.Move <- out
 		default:
