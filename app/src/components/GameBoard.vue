@@ -76,25 +76,45 @@ const Squares = [
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
 ]
 
-
 function updateBoard(fen) {
     const rows = fen.split("/")
-    var squareIndex = 0
+
     var pieceIndex = 0
+    var squareIndex = 0
+    var sign = 1
+    if (props.color == 1) { // flip board
+        squareIndex = 63
+        sign = -1
+    }
+
     for (let i = 0; i < rows.length; i++) { // must be 8 rows
         for (let j = 0; j < rows[i].length; j++) {
             if (!isNaN(rows[i][j])) {
-                squareIndex += Number(rows[i][j])
+                squareIndex += Number(rows[i][j]) * sign
             } else {
                 updatePieceType(pieceIndex, rows[i][j])
                 movePiece(pieceIndex, squareIndex)
-                squareIndex++
+                squareIndex = squareIndex + 1 * sign
                 pieceIndex++
             }
         }
     }
     for (let i = pieceIndex; i < pieceClassList.value.length; i++) {
         hidePiece(i)
+    }
+}
+
+
+function getSquare(index) {
+    if (index < 0 || index > 63) {
+        return
+    }
+    if (props.color == 0) {
+        return Squares[index]
+    } else if (props.color == 1) {
+        return Squares[63 - index]
+    } else {
+        console.log("INVALID PLAYER");
     }
 }
 
@@ -185,7 +205,7 @@ function dropHandler(ev, n) {
     dragged = null;
 
     // ASK THE SERVER
-    sendMove(Squares[start.value] + Squares[dest.value]);
+    sendMove(getSquare(start.value) + getSquare(dest.value));
 
 }
 
@@ -211,7 +231,7 @@ function captureHandler(ev) {
     dest.value = getPieceSquareIndex(ev.target.id)
 
     // ASK THE SERVER
-    sendMove(Squares[start.value] + Squares[dest.value]);
+    sendMove(getSquare(start.value) + getSquare(dest.value));
 
     showPiece(dragged.id)
     dragged = null
