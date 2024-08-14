@@ -3,8 +3,9 @@ package chess
 type Player int8
 
 const (
-	WHITE Player = 0
-	BLACK Player = 1
+	WHITE          Player = 0
+	BLACK          Player = 1
+	INVALID_PLAYER Player = -1
 )
 
 const (
