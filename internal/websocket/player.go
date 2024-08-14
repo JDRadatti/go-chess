@@ -88,7 +88,6 @@ func (p *Player) read() {
 	<-p.Game.Start // wait for game to start
 	// From now on, every move must contain a valid playerID
 	// Handle move requests
-	log.Println("GAME STARTED PLAEYER READ")
 	for {
 		_, message, err := p.Conn.ReadMessage()
 		if err != nil {
@@ -103,12 +102,10 @@ func (p *Player) read() {
 		if err != nil {
 			log.Printf("error: %v", err)
 		}
-		log.Println("INBOUND @", in)
 		if p.ID != in.PlayerID {
 			log.Println("invalid player id", p.ID, in.PlayerID)
 			continue // Soft handle invalid ids
 		}
-		log.Println("INBOUND MESSAGE", in)
 		switch in.Action {
 		case MOVE:
 			p.Game.Moves <- in

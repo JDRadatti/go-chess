@@ -15,7 +15,7 @@ type Game struct {
 	White *Player
 	Black *Player
 	Moves chan *Inbound // Moves requests sent from both white and black
-	Board chess.Board
+	Board *chess.Board
 	Start chan struct{}
 }
 
@@ -32,11 +32,12 @@ func newGame() *Game {
 		panic(err)
 	}
 
+	board := chess.NewBoardClassic()
 	newGame := &Game{
 		ID:    gameID.String()[:8],
 		Moves: make(chan *Inbound),
 		Start: make(chan struct{}),
-		Board: chess.NewBoardClassic(),
+		Board: &board,
 	}
 	go newGame.play()
 	return newGame
@@ -69,7 +70,7 @@ func (g *Game) ColorFromPID(pid string) chess.Player {
 }
 
 func (g *Game) ValidPID(pid string) bool {
-	return pid == g.White.ID || pid == g.Black.ID && g.ColorFromPID(pid) == g.Board.Turn()
+	return (pid == g.White.ID || pid == g.Black.ID) && g.ColorFromPID(pid) == g.Board.Turn()
 }
 
 func (g *Game) String() string {
@@ -85,6 +86,7 @@ func (g *Game) play() {
 
 			pid := moveRequest.PlayerID
 			if !g.ValidPID(pid) {
+				log.Println("INVALID PLAYER")
 				goto SEND_ERROR
 			} else {
 
