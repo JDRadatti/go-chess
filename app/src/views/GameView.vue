@@ -45,6 +45,8 @@ onMounted(() => {
                 router.push('/play')
             } else if (parsed.Action == "game over") {
                 gameOver.value = true
+                fen.value = parsed.FEN
+                move.value = parsed.Move
             }
             messageCount.value++
         }
