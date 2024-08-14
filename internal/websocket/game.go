@@ -6,38 +6,51 @@ import (
 	"github.com/JDRadatti/reptile/internal/chess"
 	"github.com/google/uuid"
 	"log"
+	"slices"
+	"time"
 )
 
 type State int8
 
+var validTimes []int = []int{60, 180, 600}
+var validIncrements []int = []int{0, 1, 5, 10}
+
 type Game struct {
-	ID    string
-	White *Player
-	Black *Player
-	Moves chan *Inbound // Moves requests sent from both white and black
-	Board *chess.Board
-	Start chan struct{}
+	ID        string
+	White     *Player
+	Black     *Player
+	Moves     chan *Inbound // Moves requests sent from both white and black
+	Board     *chess.Board
+	Start     chan struct{}
+	Time      int // number of seconds in the game
+	Increment int // number of seconds to add when player moves
+	Lobby     *Lobby
 }
 
-const (
-	WHITE int = iota
-	BLACK
-	ERROR
-)
-
-func newGame() *Game {
+func newGame(l *Lobby, time int, increment int) *Game {
 
 	gameID, err := uuid.NewRandom()
 	if err != nil {
 		panic(err)
 	}
 
+	if !slices.Contains(validTimes, time) {
+		time = 180
+	}
+
+	if !slices.Contains(validIncrements, increment) {
+		increment = 0
+	}
+
 	board := chess.NewBoardClassic()
 	newGame := &Game{
-		ID:    gameID.String()[:8],
-		Moves: make(chan *Inbound),
-		Start: make(chan struct{}),
-		Board: &board,
+		ID:        gameID.String()[:8],
+		Moves:     make(chan *Inbound),
+		Start:     make(chan struct{}),
+		Board:     &board,
+		Time:      time,
+		Increment: increment,
+		Lobby:     l,
 	}
 	go newGame.play()
 	return newGame
@@ -78,48 +91,67 @@ func (g *Game) String() string {
 		g.White.ID, g.Black.ID)
 }
 
+func (g *Game) Out(action Action, move string, pid string, message string) *Outbound {
+	return &Outbound{
+		Action:   action,
+		Move:     move,
+		PlayerID: pid, // Player who made the move
+		GameID:   g.ID,
+		FEN:      string(g.Board.FEN()),
+		Message:  message,
+	}
+}
+
 func (g *Game) play() {
 	<-g.Start // Wait for game to start
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
+		case <-ticker.C:
+			if g.Time < 0 {
+				// game over
+				out := g.Out(GAME_OVER, "", "", "on time")
+				g.Lobby.Clean(g.ID, g.White.ID, g.Black.ID)
+				g.White.Move <- out
+				g.Black.Move <- out
+				return
+			}
+			g.Time -= 1 + g.Increment
 		case moveRequest := <-g.Moves:
 
 			pid := moveRequest.PlayerID
 			if !g.ValidPID(pid) {
-				goto SEND_ERROR
+				out := g.Out(INVALID_MOVE, "", pid, "")
+				if pid == g.White.ID {
+					g.White.Move <- out
+				} else {
+					g.Black.Move <- out
+				}
 			} else {
 
 				// try move
 				move, valid := g.Board.Move(moveRequest.Move)
 				if valid {
-					out := &Outbound{
-						Action:   MOVE,
-						Move:     move,
-						PlayerID: pid, // Player who made the move
-						GameID:   g.ID,
-						FEN:      string(g.Board.FEN()),
+					var out *Outbound
+					if status, over := g.Board.GameOver(); over {
+						out = g.Out(GAME_OVER, move, pid, status)
+						g.Lobby.Clean(g.ID, g.White.ID, g.Black.ID)
+					} else {
+						out = g.Out(MOVE, move, pid, "")
 					}
-
-					// relay move to both players
 					g.White.Move <- out
 					g.Black.Move <- out
 				} else {
-					log.Println("INVALID MOVE")
-					goto SEND_ERROR
+					out := g.Out(INVALID_MOVE, "", pid, "")
+					if pid == g.White.ID {
+						g.White.Move <- out
+					} else {
+						g.Black.Move <- out
+					}
 				}
-			}
-		SEND_ERROR:
-			out := &Outbound{
-				Action:   INVALID_MOVE,
-				Move:     "",
-				PlayerID: pid, // Player who made the move
-				GameID:   g.ID,
-				FEN:      string(g.Board.FEN()),
-			}
-			if pid == g.White.ID {
-				g.White.Move <- out
-			} else {
-				g.Black.Move <- out
 			}
 
 		default:

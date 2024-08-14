@@ -34,6 +34,7 @@ type Board struct {
 	blackKing *Square
 	moves     []*Move
 	gameOver  bool
+	status    string
 }
 
 func NewBoardClassic() Board {
@@ -108,6 +109,14 @@ func (b *Board) Move(m string) (string, bool) {
 	move.check = check
 	move.mate = mate
 	b.gameOver = move.mate || stale
+	if stale {
+		b.status = DRAW
+	} else if b.gameOver && b.Turn() == WHITE {
+		b.status = BLACKWIN // not intuitive but turn has been incremented
+	} else {
+		b.status = WHITEWIN
+	}
+
 	b.moves = append(b.moves, move)
 
 	return move.toAlgebraic(b), true
@@ -119,11 +128,12 @@ func (b *Board) undoMove() {
 	move.startSquare1.piece = move.piece1
 	move.startSquare2.piece = move.piece2
 	move.startSquare1.markUnmoved()
+	move.destSquare1.markUnmoved()
 	move.startSquare2.markUnmoved()
 	if move.destSquare2 != nil {
 		move.destSquare2.piece = nil
 		move.destSquare2.piece = move.piece2
-		move.startSquare2.markMoved()
+		move.destSquare2.markUnmoved()
 	}
 
 	b.updateKingSquare(move.startSquare1)
@@ -135,9 +145,11 @@ func (b *Board) makeMove(move *Move) {
 	move.startSquare2.piece = nil
 	move.destSquare1.piece = move.piece1
 	move.startSquare1.markMoved()
+	move.destSquare1.markMoved()
 	if move.destSquare2 != nil {
 		move.destSquare2.piece = move.piece2
 		move.startSquare2.markMoved()
+		move.destSquare2.markMoved()
 	}
 
 	b.updateKingSquare(move.destSquare1)
@@ -173,16 +185,9 @@ func (b *Board) validMove(start *Square, dest *Square) bool {
 	}
 
 	// check edge cases
-	switch start.piece.symbol {
-	case KW:
-		fallthrough
-	case KB:
-		if b.attacked(dest) {
-			return false
-		}
-	case PW:
-		fallthrough
-	case PB:
+	if start.piece.king() && b.attacked(dest) {
+		return false
+	} else if start.piece.pawn() {
 		indexDiff := start.index - dest.index
 		if indexDiff < 0 {
 			indexDiff = -indexDiff
@@ -254,6 +259,10 @@ func (b *Board) emptyOrCapturable(start *Square, dest *Square) bool {
 	}
 	if dest.empty() {
 		return true
+	}
+
+	if start.piece.pawn() && dest.file() == start.file() {
+		return false
 	}
 	return !start.samePlayer(dest)
 }
@@ -456,4 +465,8 @@ func (b *Board) String() string {
 		counter++
 	}
 	return builder
+}
+
+func (b *Board) GameOver() (string, bool) {
+	return b.status, b.gameOver
 }

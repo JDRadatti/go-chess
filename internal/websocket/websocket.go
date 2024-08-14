@@ -2,8 +2,8 @@ package websocket
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"github.com/JDRadatti/reptile/internal/chess"
+	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"time"
@@ -21,6 +21,7 @@ const (
 	JOIN_SUCCESS = "join success"
 	JOIN_FAIL    = "join fail"
 	GAME_START   = "game start"
+	GAME_OVER    = "game over"
 )
 
 type Inbound struct {
@@ -105,7 +106,7 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 
 	player, ok := ws.Lobby.GetPlayer(in.PlayerID)
 	if !ok {
-		player = NewPlayer(ws.Lobby, conn)
+		player = NewPlayer(ws.Lobby, conn, 0, 0)
 		player.ID = GenerateID()
 		if game, ok := ws.Lobby.GetGame(ws.GameID); ok {
 			if err = game.addPlayer(player); err != nil {
