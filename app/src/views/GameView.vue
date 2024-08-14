@@ -21,7 +21,6 @@ onMounted(() => {
         console.log("failed to connect to websocket")
     }
     CONN.onmessage = function (event) {
-        console.log(event)
         var messages = event.data.split('\n');
         for (var i = 0; i < messages.length; i++) {
             var message = messages[i];
