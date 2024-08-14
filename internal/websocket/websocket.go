@@ -33,6 +33,7 @@ type Inbound struct {
 type Outbound struct {
 	Action   Action
 	Move     string
+	FEN      string
 	PlayerID string
 	GameID   string
 	Time     time.Time

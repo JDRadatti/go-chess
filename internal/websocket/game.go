@@ -104,6 +104,7 @@ func (g *Game) play() {
 				Move:     moveRequest.Move,
 				PlayerID: pid, // Player who made the move
 				GameID:   g.ID,
+				FEN:      "",
 			}
 			g.AllMoves = append(g.AllMoves, out.Move)
 			g.White.Move <- out
