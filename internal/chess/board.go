@@ -34,6 +34,7 @@ type Board struct {
 	blackKing *Square
 	moves     []*Move
 	gameOver  bool
+	status    string
 }
 
 func NewBoardClassic() Board {
@@ -108,6 +109,14 @@ func (b *Board) Move(m string) (string, bool) {
 	move.check = check
 	move.mate = mate
 	b.gameOver = move.mate || stale
+	if stale {
+		b.status = DRAW
+	} else if b.gameOver && b.Turn() == WHITE {
+		b.status = BLACKWIN // not intuitive but turn has been incremented
+	} else {
+		b.status = WHITEWIN
+	}
+
 	b.moves = append(b.moves, move)
 
 	return move.toAlgebraic(b), true
