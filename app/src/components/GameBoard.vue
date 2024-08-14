@@ -3,7 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { sendMove } from '../scripts/websocket.js'
 import { VueSpinnerBox } from 'vue3-spinners';
 
-const props = defineProps(['start', 'color', 'waiting', 'fen'])
+const props = defineProps(['start', 'color', 'waiting', 'fen', 'count'])
 
 const waiting = ref(false)
 const dragPiece = ref(null);
@@ -234,15 +234,17 @@ onMounted(() => {
 });
 
 watch(props, (props) => {
-    if (props.start) {
+    if (props.start && waiting.value == true) {
         updateBoard("RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr")
         showAllPieces()
         waiting.value = false // stop spinner
     }
+
     if (props.waiting) {
         waiting.value = true // start spinner
     }
-    if (waiting.value == false && props.fen) {
+
+    if (props.fen) {
         updateBoard(props.fen)
     }
 })

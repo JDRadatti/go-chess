@@ -14,6 +14,7 @@ const started = ref(false)
 const waiting = ref(false)
 const move = ref("")
 const fen = ref("")
+const messageCount = ref(0)
 
 onMounted(() => {
     let CONN = useWebsocket(route.params.id)
@@ -41,6 +42,7 @@ onMounted(() => {
                 alert("game full... redirecting")
                 router.push('/play')
             }
+            messageCount.value++
         }
     };
 })
@@ -50,7 +52,7 @@ onMounted(() => {
 
 <template>
     <main class="game-container">
-        <GameBoard :start="started" :color="color" :waiting="waiting" :fen="fen" />
+        <GameBoard :start="started" :color="color" :waiting="waiting" :fen="fen" :count="messageCount" />
         <div>
             <GameSide />
         </div>
