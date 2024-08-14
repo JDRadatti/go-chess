@@ -34,14 +34,16 @@ type Inbound struct {
 }
 
 type Outbound struct {
-	Action   Action
-	Move     string
-	FEN      string
-	PlayerID string
-	GameID   string
-	Time     time.Time
-	Color    chess.Player
-	Message  string
+	Action    Action
+	Move      string
+	FEN       string
+	PlayerID  string
+	GameID    string
+	Time      int
+	Increment int
+	Color     chess.Player
+	Message   string
+	Turn      chess.Player
 }
 
 type WSHandler struct {
@@ -127,10 +129,12 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 
 	// Send join success
 	joinSuccess := &Outbound{
-		Action:   JOIN_SUCCESS,
-		PlayerID: player.ID,
-		GameID:   player.Game.ID,
-		Color:    player.Game.ColorFromPID(player.ID),
+		Action:    JOIN_SUCCESS,
+		PlayerID:  player.ID,
+		GameID:    player.Game.ID,
+		Color:     player.Game.ColorFromPID(player.ID),
+		Time:      player.Game.Time,
+		Increment: player.Game.Increment,
 	}
 	message, err = json.Marshal(joinSuccess)
 	if err != nil {
