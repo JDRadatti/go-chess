@@ -9,12 +9,15 @@ const route = useRoute()
 const router = useRouter()
 
 const color = ref(-1)
+var time = ref(0)
+var increment = ref(0)
 const gameID = ref("")
 const started = ref(false)
 const waiting = ref(false)
 const move = ref("")
 const fen = ref("")
 const gameOver = ref(false)
+const whiteTurn = ref(true)
 const messageCount = ref(0)
 
 onMounted(() => {
@@ -30,8 +33,10 @@ onMounted(() => {
             var parsed = JSON.parse(message)
             if (parsed.Action == "join success") {
                 localStorage.setItem("playerID", parsed["PlayerID"])
-                color.value = parsed["Color"];
-                gameID.value = parsed["GameID"];
+                color.value = parsed.Color
+                gameID.value = parsed.GameID;
+                time.value = parsed.Time;
+                increment.value = parsed.Increment;
                 waiting.value = true
             } else if (parsed.Action == "game start") {
                 started.value = true
@@ -48,6 +53,11 @@ onMounted(() => {
                 fen.value = parsed.FEN
                 move.value = parsed.Move
             }
+            if (parsed.Turn == 0) {
+                whiteTurn.value = false
+            } else {
+                whiteTurn.value = true
+            }
             messageCount.value++
         }
     };
@@ -61,7 +71,7 @@ onMounted(() => {
         <GameBoard :start="started" :color="color" :waiting="waiting" :fen="fen" :count="messageCount"
             :over="gameOver" />
         <div>
-            <GameSide />
+            <GameSide :start="started" :whiteTurn="whiteTurn" :time="time" :increment="increment" :color="color" :over="gameOver" />
         </div>
     </main>
 </template>
