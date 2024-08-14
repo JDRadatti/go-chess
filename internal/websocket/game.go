@@ -98,6 +98,7 @@ func (g *Game) Out(action Action, move string, pid string, message string) *Outb
 		PlayerID: pid, // Player who made the move
 		GameID:   g.ID,
 		FEN:      string(g.Board.FEN()),
+		Message:  message,
 	}
 }
 
@@ -134,7 +135,13 @@ func (g *Game) play() {
 				// try move
 				move, valid := g.Board.Move(moveRequest.Move)
 				if valid {
-					out := g.Out(MOVE, move, pid, "")
+					var out *Outbound
+					if status, over := g.Board.GameOver(); over {
+						out = g.Out(GAME_OVER, move, pid, status)
+						g.Lobby.Clean(g.ID, g.White.ID, g.Black.ID)
+					} else {
+						out = g.Out(MOVE, move, pid, "")
+					}
 					g.White.Move <- out
 					g.Black.Move <- out
 				} else {
