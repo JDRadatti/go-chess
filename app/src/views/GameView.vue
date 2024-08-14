@@ -35,6 +35,7 @@ onMounted(() => {
             } else if (parsed.Action == "game start") {
                 started.value = true
                 waiting.value = false
+                fen.value = parsed.FEN
             } else if (parsed.Action == "move") {
                 move.value = parsed.Move
                 fen.value = parsed.FEN

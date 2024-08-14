@@ -234,18 +234,18 @@ onMounted(() => {
 });
 
 watch(props, (props) => {
+
+    if (props.fen) {
+        updateBoard(props.fen)
+    }
+
     if (props.start && waiting.value == true) {
-        updateBoard("RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr")
         showAllPieces()
         waiting.value = false // stop spinner
     }
 
     if (props.waiting) {
         waiting.value = true // start spinner
-    }
-
-    if (props.fen) {
-        updateBoard(props.fen)
     }
 })
 </script>

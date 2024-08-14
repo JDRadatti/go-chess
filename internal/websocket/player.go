@@ -44,9 +44,16 @@ func GenerateID() string {
 // concurrent write errors
 func (p *Player) write() {
 	<-p.Game.Start // wait for game to start
+	var fen string
+	if p.Game.Board != nil {
+		fen = string(p.Game.Board.FEN())
+	} else {
+		fen = "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr"
+	}
 	message, err := json.Marshal(&Outbound{
 		Action: GAME_START,
 		GameID: p.Game.ID,
+		FEN:    fen,
 		Time:   time.Now(),
 	})
 	if err != nil {
