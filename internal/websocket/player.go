@@ -2,8 +2,10 @@ package websocket
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"log"
+	"time"
 )
 
 type Player struct {
@@ -29,11 +31,40 @@ func NewPlayer(l *Lobby, conn *websocket.Conn) *Player {
 	}
 }
 
+func GenerateID() string {
+	uuid, err := uuid.NewRandom()
+	if err != nil {
+		log.Printf("error %s", err)
+	}
+	return uuid.String()
+}
+
 // write message from the Game to the websocket
 // All writes to websocket MUST be in this function to avoid
 // concurrent write errors
 func (p *Player) write() {
 	<-p.Game.Start // wait for game to start
+	var fen string
+	if p.Game.Board != nil {
+		fen = string(p.Game.Board.FEN())
+	} else {
+		fen = "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr"
+	}
+	message, err := json.Marshal(&Outbound{
+		Action: GAME_START,
+		GameID: p.Game.ID,
+		FEN:    fen,
+		Time:   time.Now(),
+	})
+	if err != nil {
+		log.Printf("error: %v", err)
+		return
+	}
+	if err := p.Conn.WriteMessage(messageType, []byte(message)); err != nil {
+		log.Printf("error: %v", err)
+		return
+	}
+
 	for {
 		select {
 		case out := <-p.Move:

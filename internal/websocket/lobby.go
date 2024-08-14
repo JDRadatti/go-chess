@@ -5,7 +5,7 @@ import (
 )
 
 var (
-    maxGames = 10 
+	maxGames = 10
 )
 
 type Lobby struct {
@@ -32,6 +32,16 @@ func (l *Lobby) GetGame(id string) (*Game, bool) {
 func (l *Lobby) GetPlayer(id string) (*Player, bool) {
 	player, ok := l.Players[id]
 	return player, ok
+}
+
+func (l *Lobby) AddPlayer(player *Player) bool {
+	log.Println("ADD PLAEYR", player)
+	if _, ok := l.Players[player.ID]; ok {
+		log.Println("HERE already playing in diff game")
+		return false
+	}
+	l.Players[player.ID] = player
+	return true
 }
 
 func (l *Lobby) GetOrCreatePlayer(playerID string) *Player {
@@ -64,7 +74,7 @@ func (l *Lobby) Run() {
 				}
 			default:
 				game = newGame()
-                l.GamePool <- game
+				l.GamePool <- game
 			}
 
 			if err := game.addPlayer(player); err != nil {

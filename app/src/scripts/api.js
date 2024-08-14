@@ -1,21 +1,30 @@
 import axios from 'axios'
+import { ref } from 'vue'
 
 const defaultTime = 10
 const defaultIncrement = 0
+const playerID = ref("")
 
 // Get the PlayerID, or retrieve a new PlayerID from the server
 export function getPlayerID() {
-    let playerID = localStorage.getItem("playerID")
-    if (playerID == null) {
-        axios.post("/token").then(response => {
-            playerID = response.data
-            localStorage.setItem("playerID", playerID)
-        }).catch(err => {
-            console.log("error", err)
-        })
+    if (playerID.value != "") {
+        return playerID.value
     }
-    return playerID
-};
+    if (localStorage.getItem("playerID") != null) {
+        playerID.value = localStorage.getItem("playerID")
+        return playerID.value
+    }
+
+    return playerID.value
+}
+
+export function setPlayerID() {
+    axios.post("/token").then(response => {
+        localStorage.setItem("playerID", response.data)
+    }).catch(err => {
+        console.log("error", err)
+    })
+}
 
 
 export async function startGame(time, increment) {

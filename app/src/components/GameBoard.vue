@@ -1,7 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { sendMove } from '../scripts/websocket.js'
+import { VueSpinnerBox } from 'vue3-spinners';
 
+const props = defineProps(['start', 'color', 'waiting', 'fen', 'count'])
+
+const waiting = ref(false)
 const dragPiece = ref(null);
 const boardRef = ref(null);
 const pieceClassList = ref([
@@ -72,25 +76,45 @@ const Squares = [
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
 ]
 
-
 function updateBoard(fen) {
     const rows = fen.split("/")
-    var squareIndex = 0
+
     var pieceIndex = 0
+    var squareIndex = 0
+    var sign = 1
+    if (props.color == 1) { // flip board
+        squareIndex = 63
+        sign = -1
+    }
+
     for (let i = 0; i < rows.length; i++) { // must be 8 rows
         for (let j = 0; j < rows[i].length; j++) {
             if (!isNaN(rows[i][j])) {
-                squareIndex += Number(rows[i][j])
+                squareIndex += Number(rows[i][j]) * sign
             } else {
                 updatePieceType(pieceIndex, rows[i][j])
                 movePiece(pieceIndex, squareIndex)
-                squareIndex++
+                squareIndex = squareIndex + 1 * sign
                 pieceIndex++
             }
         }
     }
     for (let i = pieceIndex; i < pieceClassList.value.length; i++) {
         hidePiece(i)
+    }
+}
+
+
+function getSquare(index) {
+    if (index < 0 || index > 63) {
+        return
+    }
+    if (props.color == 0) {
+        return Squares[index]
+    } else if (props.color == 1) {
+        return Squares[63 - index]
+    } else {
+        console.log("INVALID PLAYER");
     }
 }
 
@@ -181,7 +205,7 @@ function dropHandler(ev, n) {
     dragged = null;
 
     // ASK THE SERVER
-    sendMove(Squares[start.value] + Squares[dest.value]);
+    sendMove(getSquare(start.value) + getSquare(dest.value));
 
 }
 
@@ -207,15 +231,13 @@ function captureHandler(ev) {
     dest.value = getPieceSquareIndex(ev.target.id)
 
     // ASK THE SERVER
-    sendMove(Squares[start.value] + Squares[dest.value]);
+    sendMove(getSquare(start.value) + getSquare(dest.value));
 
     showPiece(dragged.id)
     dragged = null
 }
 
 onMounted(() => {
-    //updateBoard("RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr") // white on bottom starting position
-    //updateBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") // black on bottom starting position
     const squareElements = document.querySelectorAll('.square')
     var rank = 0
     for (let i = 0; i < squareElements.length; i++) {
@@ -228,14 +250,33 @@ onMounted(() => {
             squareElements[i].classList.add("light")
         }
     }
-
+    hideAllPieces()
 });
 
+watch(props, (props) => {
+
+    if (props.fen) {
+        updateBoard(props.fen)
+    }
+
+    if (props.start && waiting.value == true) {
+        showAllPieces()
+        waiting.value = false // stop spinner
+    }
+
+    if (props.waiting) {
+        waiting.value = true // start spinner
+    }
+})
 </script>
 
 <template>
     <div inert class="drag unselectable hide" draggable="false" ref="dragPiece"></div>
     <div class="board-container" @dragover="dragoverHandler($event)" @dragenter.prevent @dragover.prevent>
+        <div class="spinner-container" v-if="waiting">
+            <VueSpinnerBox size="100" color="rgba(132, 118, 186, 1)" />
+            <p> Waiting for Opponenet... </p>
+        </div>
         <div class="board" draggable="false">
             <div class="square unselectable" v-for="n in 64" draggable="false" @dragenter="dragenterHandler($event)"
                 @dragleave="dragleaveHandler($event)" @drop="dropHandler($event, n)" @dragover.prevent
@@ -250,6 +291,26 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 2rem;
+    background-color: var(--color-background);
+    border: var(--color-background);
+    position: absolute;
+    width: calc(var(--square-size) * 4);
+    height: calc(var(--square-size) * 4);
+    top: 25%;
+    left: 28%;
+}
+
+.spinner-container p {
+    color: var(--light-square);
+    text-align: center;
+}
+
 .board-container {
     position: relative;
     padding: 0 2rem;

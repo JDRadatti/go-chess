@@ -3,8 +3,9 @@ package chess
 type Player int8
 
 const (
-	WHITE Player = 0
-	BLACK Player = 1
+	WHITE          Player = 0
+	BLACK          Player = 1
+	INVALID_PLAYER Player = -1
 )
 
 const (
@@ -76,7 +77,7 @@ func (b *Board) Move(m string) (string, bool) {
 		return "", false
 	}
 
-	if b.gameOver || start.empty() || start.piece.player != b.turn() {
+	if b.gameOver || start.empty() || start.piece.player != b.Turn() {
 		return "", false
 	}
 
@@ -234,7 +235,7 @@ func (b *Board) attacked(square *Square) bool {
 			continue
 		}
 
-		if b.turn() != s.piece.player { // opponent piece
+		if b.Turn() != s.piece.player { // opponent piece
 			if s.piece.pawn() && s.file() == square.file() {
 				continue
 			} else if b.clearMove(s, square) {
@@ -257,7 +258,7 @@ func (b *Board) emptyOrCapturable(start *Square, dest *Square) bool {
 	return !start.samePlayer(dest)
 }
 
-func (b *Board) turn() Player {
+func (b *Board) Turn() Player {
 	return Player(b.turns % 2)
 }
 
@@ -273,7 +274,7 @@ func (b *Board) inCheck(s *Square) bool {
 // check, checkmate, or stalemate
 // This should not be called to get just check (instead, use inCheck)
 func (b *Board) checkOrMateOrStale() (bool, bool, bool) {
-	hasValidMoves := b.hasValidMoves(b.turn())
+	hasValidMoves := b.hasValidMoves(b.Turn())
 	check := b.inCheck(b.currentKing())
 	return check, check && !hasValidMoves, !check && !hasValidMoves
 }
@@ -398,7 +399,7 @@ func (b *Board) updateKingSquare(newKingSquare *Square) {
 // currentKing returns the king belonging to the player
 // whose turn it is
 func (b *Board) currentKing() *Square {
-	return b.king(b.turn())
+	return b.king(b.Turn())
 }
 
 func (b *Board) king(player Player) *Square {
