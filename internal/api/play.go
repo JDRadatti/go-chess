@@ -39,7 +39,7 @@ func HandlePlay(w http.ResponseWriter, r *http.Request, lobby *websocket.Lobby) 
 		return
 	}
 
-	player := lobby.GetOrCreatePlayer(playerID)
+	player := lobby.GetOrCreatePlayer(playerID, gameRequest.Time, gameRequest.Increment)
 	lobby.PlayerPool <- player
 
 	<-player.InGame // wait for match making.

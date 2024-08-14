@@ -9,12 +9,14 @@ import (
 )
 
 type Player struct {
-	ID     string
-	Game   *Game
-	Lobby  *Lobby
-	Conn   *websocket.Conn
-	Move   chan *Outbound
-	InGame chan struct{}
+	ID        string
+	Game      *Game
+	Lobby     *Lobby
+	Conn      *websocket.Conn
+	Move      chan *Outbound
+	InGame    chan struct{}
+	Time      int
+	Increment int
 }
 
 var (
@@ -22,12 +24,14 @@ var (
 	matchMakingMaxWait = 60 // seconds
 )
 
-func NewPlayer(l *Lobby, conn *websocket.Conn) *Player {
+func NewPlayer(l *Lobby, conn *websocket.Conn, time int, increment int) *Player {
 	return &Player{
 		Lobby:  l,
 		Conn:   conn,
 		Move:   make(chan *Outbound),
 		InGame: make(chan struct{}),
+        Time: time, 
+        Increment: increment, 
 	}
 }
 
