@@ -11,6 +11,7 @@ const router = useRouter()
 const color = ref(-1)
 const gameID = ref("")
 const started = ref(false)
+const status = ref("")
 
 onMounted(() => {
     let CONN = useWebsocket(route.params.id)
@@ -24,6 +25,7 @@ onMounted(() => {
             var message = messages[i];
             var parsed = JSON.parse(message)
             if (parsed.Action == "join success") {
+                console.log("JOI*N SUCCESS")
                 localStorage.setItem("playerID", parsed["PlayerID"])
                 color.value = parsed["Color"];
                 gameID.value = parsed["GameID"];
@@ -35,6 +37,7 @@ onMounted(() => {
                 alert("game full... redirecting")
                 router.push('/play')
             }
+            status.value = parsed.Action
         }
     };
 })
@@ -44,7 +47,7 @@ onMounted(() => {
 
 <template>
     <main class="game-container">
-        <GameBoard :start="started" :color="color" />
+        <GameBoard :start="started" :color="color" :status="status" />
         <div>
             <GameSide />
         </div>

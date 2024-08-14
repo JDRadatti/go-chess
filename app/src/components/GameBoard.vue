@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { sendMove } from '../scripts/websocket.js'
+import { VueSpinnerBox } from 'vue3-spinners';
 
 const props = defineProps(['start', 'color', 'status'])
 
+const waiting = ref(false)
 const dragPiece = ref(null);
 const boardRef = ref(null);
 const pieceClassList = ref([
@@ -235,6 +237,10 @@ watch(props, (props) => {
     if (props.start) {
         updateBoard("RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr")
         showAllPieces()
+        waiting.value = false // stop spinner
+    }
+    if (props.status == "join success") {
+        waiting.value = true // start spinner
     }
 })
 
@@ -245,6 +251,10 @@ watch(props, (props) => {
     <div> {{ props.start }} {{ props.color }}</div>
     <div inert class="drag unselectable hide" draggable="false" ref="dragPiece"></div>
     <div class="board-container" @dragover="dragoverHandler($event)" @dragenter.prevent @dragover.prevent>
+        <div class="spinner-container" v-if="waiting">
+            <VueSpinnerBox size="100" color="rgba(132, 118, 186, 1)" />
+            <p> Waiting for Opponenet... </p>
+        </div>
         <div class="board" draggable="false">
             <div class="square unselectable" v-for="n in 64" draggable="false" @dragenter="dragenterHandler($event)"
                 @dragleave="dragleaveHandler($event)" @drop="dropHandler($event, n)" @dragover.prevent
@@ -259,6 +269,26 @@ watch(props, (props) => {
 </template>
 
 <style scoped>
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 2rem;
+    background-color: var(--color-background);
+    border: var(--color-background);
+    position: absolute;
+    width: calc(var(--square-size) * 4);
+    height: calc(var(--square-size) * 4);
+    top: 25%;
+    left: 28%;
+}
+
+.spinner-container p {
+    color: var(--light-square);
+    text-align: center;
+}
+
 .board-container {
     position: relative;
     padding: 0 2rem;
