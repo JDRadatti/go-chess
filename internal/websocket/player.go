@@ -5,7 +5,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"log"
-	"time"
 )
 
 type Player struct {
@@ -26,12 +25,12 @@ var (
 
 func NewPlayer(l *Lobby, conn *websocket.Conn, time int, increment int) *Player {
 	return &Player{
-		Lobby:  l,
-		Conn:   conn,
-		Move:   make(chan *Outbound),
-		InGame: make(chan struct{}),
-        Time: time, 
-        Increment: increment, 
+		Lobby:     l,
+		Conn:      conn,
+		Move:      make(chan *Outbound),
+		InGame:    make(chan struct{}),
+		Time:      time,
+		Increment: increment,
 	}
 }
 
@@ -58,7 +57,6 @@ func (p *Player) write() {
 		Action: GAME_START,
 		GameID: p.Game.ID,
 		FEN:    fen,
-		Time:   time.Now(),
 	})
 	if err != nil {
 		log.Printf("error: %v", err)

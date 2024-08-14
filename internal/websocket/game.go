@@ -99,6 +99,7 @@ func (g *Game) Out(action Action, move string, pid string, message string) *Outb
 		GameID:   g.ID,
 		FEN:      string(g.Board.FEN()),
 		Message:  message,
+		Turn:     g.Board.Turn(),
 	}
 }
 
