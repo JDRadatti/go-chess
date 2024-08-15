@@ -12,8 +12,8 @@ import (
 
 type State int8
 
-var validTimes []int = []int{60, 180, 600}
-var validIncrements []int = []int{0, 1, 5, 10}
+var validTimes []int = []int{60, 180, 300, 600}
+var validIncrements []int = []int{0, 1, 2, 10}
 
 type Game struct {
 	ID        string
@@ -130,9 +130,9 @@ func (g *Game) play() {
 				g.Black.Move <- out
 			}
 			if g.Board.Turn() == chess.WHITE {
-				g.WhiteTime -= 1 + g.Increment
+				g.WhiteTime -= 1
 			} else {
-				g.BlackTime -= 1 + g.Increment
+				g.BlackTime -= 1
 			}
 		case moveRequest := <-g.Moves:
 
@@ -154,6 +154,11 @@ func (g *Game) play() {
 						out = g.Out(GAME_OVER, move, pid, status)
 						g.Lobby.Clean(g.ID, g.White.ID, g.Black.ID)
 					} else {
+						if g.Board.Turn() == chess.WHITE {
+							g.BlackTime += g.Increment
+						} else {
+							g.WhiteTime += g.Increment
+						}
 						out = g.Out(MOVE, move, pid, "")
 					}
 					g.White.Move <- out
