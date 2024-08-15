@@ -2,10 +2,10 @@ package websocket
 
 import (
 	"encoding/json"
+	"github.com/JDRadatti/reptile/internal/chess"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"log"
-	"time"
 )
 
 type Player struct {
@@ -26,12 +26,12 @@ var (
 
 func NewPlayer(l *Lobby, conn *websocket.Conn, time int, increment int) *Player {
 	return &Player{
-		Lobby:  l,
-		Conn:   conn,
-		Move:   make(chan *Outbound),
-		InGame: make(chan struct{}),
-        Time: time, 
-        Increment: increment, 
+		Lobby:     l,
+		Conn:      conn,
+		Move:      make(chan *Outbound),
+		InGame:    make(chan struct{}),
+		Time:      time,
+		Increment: increment,
 	}
 }
 
@@ -49,8 +49,10 @@ func GenerateID() string {
 func (p *Player) write() {
 	<-p.Game.Start // wait for game to start
 	var fen string
+	var turn chess.Player
 	if p.Game.Board != nil {
 		fen = string(p.Game.Board.FEN())
+		turn = p.Game.Board.Turn()
 	} else {
 		fen = "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr"
 	}
@@ -58,7 +60,7 @@ func (p *Player) write() {
 		Action: GAME_START,
 		GameID: p.Game.ID,
 		FEN:    fen,
-		Time:   time.Now(),
+		Turn:   turn,
 	})
 	if err != nil {
 		log.Printf("error: %v", err)
