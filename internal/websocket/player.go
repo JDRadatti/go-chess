@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"github.com/JDRadatti/reptile/internal/chess"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"log"
@@ -48,8 +49,10 @@ func GenerateID() string {
 func (p *Player) write() {
 	<-p.Game.Start // wait for game to start
 	var fen string
+	var turn chess.Player
 	if p.Game.Board != nil {
 		fen = string(p.Game.Board.FEN())
+		turn = p.Game.Board.Turn()
 	} else {
 		fen = "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr"
 	}
@@ -57,6 +60,7 @@ func (p *Player) write() {
 		Action: GAME_START,
 		GameID: p.Game.ID,
 		FEN:    fen,
+		Turn:   turn,
 	})
 	if err != nil {
 		log.Printf("error: %v", err)
