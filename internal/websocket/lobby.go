@@ -47,9 +47,7 @@ func (l *Lobby) GetPlayer(id string) (*Player, bool) {
 }
 
 func (l *Lobby) AddPlayer(player *Player) bool {
-	log.Println("ADD PLAEYR", player)
 	if _, ok := l.Players[player.ID]; ok {
-		log.Println("HERE already playing in diff game")
 		return false
 	}
 	l.Players[player.ID] = player
