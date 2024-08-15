@@ -7,8 +7,9 @@ import { onMounted } from 'vue'
 
 const router = useRouter();
 
-function clickStart() {
-    startGame().then((response) => {
+// time should be in minutes, increment in seconds
+function clickStart(time, increment) {
+    startGame(time, increment).then((response) => {
         if (response["GameID"]) {
             router.push('/game/' + response["GameID"]);
         }
