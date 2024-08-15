@@ -25,6 +25,47 @@ a,
     padding: 0 2rem;
 }
 
+button {
+    padding: 1rem 2rem;
+    border-radius: none;
+}
+
+button:hover {
+    border: solid var(--light-square);
+}
+
+button[data-type="primary"] {
+    color: var(--light-square);
+    background-color: var(--dark-square);
+    border: solid var(--dark-square);
+}
+
+button[data-type="primary"].active {
+    border: solid var(--light-square);
+    color: var(--light-square);
+}
+
+button[data-type="primary"]:hover {
+    border: solid var(--light-square);
+    color: var(--light-square);
+}
+
+button[data-type="secondary"] {
+    background-color: var(--backgound-color);
+    border: solid var(--dark-square);
+    color: var(--dark-square);
+}
+
+button[data-type="secondary"].active {
+    color: var(--light-square);
+    border: solid var(--light-square);
+}
+
+button[data-type="secondary"]:hover {
+    color: var(--light-square);
+    border: solid var(--light-square);
+}
+
 @media (hover: hover) {
     a:hover {
         background-color: var(--color-primary-hover);
