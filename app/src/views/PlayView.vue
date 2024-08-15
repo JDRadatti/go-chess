@@ -3,12 +3,13 @@ import GameBoard from '../components/GameBoard.vue'
 import GameOptions from '../components/GameOptions.vue'
 import { startGame, setPlayerID } from '../scripts/api.js'
 import { useRouter } from 'vue-router'
-import {onMounted} from 'vue'
+import { onMounted } from 'vue'
 
 const router = useRouter();
 
-function clickStart() {
-    startGame().then((response) => {
+// time should be in minutes, increment in seconds
+function clickStart(time, increment) {
+    startGame(time, increment).then((response) => {
         if (response["GameID"]) {
             router.push('/game/' + response["GameID"]);
         }
@@ -26,11 +27,9 @@ onMounted(() => {
     <main class="game-container">
         <GameBoard />
         <div>
-            <GameOptions />
-            <button @click="clickStart"> Start Game </button>
+            <GameOptions @start='clickStart' />
         </div>
     </main>
 </template>
 
-<style>
-</style>
+<style></style>
