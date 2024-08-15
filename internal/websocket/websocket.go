@@ -22,6 +22,7 @@ const (
 	JOIN_FAIL    = "join fail"
 	GAME_START   = "game start"
 	GAME_OVER    = "game over"
+	TIME_UPDATE  = "time"
 )
 
 type Inbound struct {
@@ -39,7 +40,8 @@ type Outbound struct {
 	FEN       string
 	PlayerID  string
 	GameID    string
-	Time      int
+	WhiteTime int
+	BlackTime int
 	Increment int
 	Color     chess.Player
 	Message   string
@@ -133,8 +135,10 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 		PlayerID:  player.ID,
 		GameID:    player.Game.ID,
 		Color:     player.Game.ColorFromPID(player.ID),
-		Time:      player.Game.WhiteTime,
+		WhiteTime: player.Game.WhiteTime,
+		BlackTime: player.Game.BlackTime,
 		Increment: player.Game.Increment,
+		Turn:      player.Game.Board.Turn(),
 	}
 	message, err = json.Marshal(joinSuccess)
 	if err != nil {
