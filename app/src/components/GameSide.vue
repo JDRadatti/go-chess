@@ -2,36 +2,20 @@
 import { ref, onMounted, watch, computed } from 'vue'
 
 // time and increment should be in seconds
-const props = defineProps(['whiteTurn', 'time', 'increment', 'start', 'color', 'over'])
+const props = defineProps(['whiteTurn', 'whiteTime', 'blackTime', 'increment', 'start', 'color', 'over'])
 
 const started = ref(false)
+const gameOver = ref(false)
 const clocksClassList = ref(["clocks", ""])
-const clockWhiteList = ref(["clock", "active"])
+const clockWhiteList = ref(["clock", ""])
 const clockBlackList = ref(["clock", ""])
 const whiteTime = ref(0) // seconds left in white's time clock
 const blackTime = ref(0)
-const whiteTimeFormatted = computed(() => formatSeconds(whiteTime.value))
-const blackTimeFormatted = computed(() => formatSeconds(blackTime.value))
-
-setInterval(countdown, 1000)
-
-function countdown() {
-    if (!props.start) {
-        return
-    }
-    if (props.whiteTurn) {
-        whiteTime.value = whiteTime.value - 1 + props.increment
-    } else {
-        blackTime.value = blackTime.value - 1 + props.increment
-    }
-}
+const whiteTimeFormatted = computed(() => formatSeconds(props.whiteTime))
+const blackTimeFormatted = computed(() => formatSeconds(props.blackTime))
 
 function flip() {
-    if (clocksClassList.value[1] == "flipped") {
-        clocksClassList.value[1] = ""
-    } else {
-        clocksClassList.value[1] = "flipped"
-    }
+    clocksClassList.value[1] = "flipped"
 }
 
 function activateWhiteClock() {
@@ -49,9 +33,6 @@ function formatSeconds(seconds) {
 }
 
 watch(started, () => {
-    whiteTime.value = props.time
-    blackTime.value = props.time
-    console.log("props.color", props.color);
     if (props.color == 1) {
         flip()
     }
@@ -60,8 +41,9 @@ watch(started, () => {
 watch(props, (props) => {
     if (props.start) {
         started.value = true
-    } else if (props.over) {
-        started = false
+    }
+    if (props.over) {
+        gameOver.value = true
     }
     if (props.whiteTurn) {
         activateWhiteClock()
@@ -74,11 +56,11 @@ watch(props, (props) => {
 <template>
     <div class="board-side-container">
         <div :class="clocksClassList">
-            <div :class="clockWhiteList">
-                <p>{{ whiteTimeFormatted }}</p>
-            </div>
             <div :class="clockBlackList">
                 <p>{{ blackTimeFormatted }}</p>
+            </div>
+            <div :class="clockWhiteList">
+                <p>{{ whiteTimeFormatted }}</p>
             </div>
         </div>
     </div>
