@@ -124,7 +124,7 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 		}
 	}
 
-	if player.Game.ID != ws.GameID {
+	if player.Game == nil || player.Game.ID != ws.GameID {
 		log.Println("invalid game id")
 		return nil, false
 	}

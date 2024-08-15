@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
+import CopyLink from '../components/CopyLink.vue'
 
 // time and increment should be in seconds
 const props = defineProps(['whiteTurn', 'whiteTime', 'blackTime', 'increment', 'start', 'color', 'over'])
@@ -59,6 +60,7 @@ watch(props, (props) => {
             <div :class="clockBlackList">
                 <p>{{ blackTimeFormatted }}</p>
             </div>
+            <CopyLink :show="start"></CopyLink>
             <div :class="clockWhiteList">
                 <p>{{ whiteTimeFormatted }}</p>
             </div>
@@ -82,7 +84,7 @@ p {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
 }
 
 
