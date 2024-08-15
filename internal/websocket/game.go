@@ -95,13 +95,15 @@ func (g *Game) String() string {
 
 func (g *Game) Out(action Action, move string, pid string, message string) *Outbound {
 	return &Outbound{
-		Action:   action,
-		Move:     move,
-		PlayerID: pid, // Player who made the move
-		GameID:   g.ID,
-		FEN:      string(g.Board.FEN()),
-		Message:  message,
-		Turn:     g.Board.Turn(),
+		Action:    action,
+		Move:      move,
+		PlayerID:  pid, // Player who made the move
+		GameID:    g.ID,
+		FEN:       string(g.Board.FEN()),
+		Message:   message,
+		Turn:      g.Board.Turn(),
+		WhiteTime: g.WhiteTime,
+		BlackTime: g.BlackTime,
 	}
 }
 
@@ -122,6 +124,10 @@ func (g *Game) play() {
 				g.White.Move <- out
 				g.Black.Move <- out
 				return
+			} else {
+				out := g.Out(TIME_UPDATE, "", "", "")
+				g.White.Move <- out
+				g.Black.Move <- out
 			}
 			if g.Board.Turn() == chess.WHITE {
 				g.WhiteTime -= 1 + g.Increment
