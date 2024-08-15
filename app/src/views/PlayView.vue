@@ -3,7 +3,7 @@ import GameBoard from '../components/GameBoard.vue'
 import GameOptions from '../components/GameOptions.vue'
 import { startGame, setPlayerID } from '../scripts/api.js'
 import { useRouter } from 'vue-router'
-import {onMounted} from 'vue'
+import { onMounted } from 'vue'
 
 const router = useRouter();
 
@@ -26,11 +26,9 @@ onMounted(() => {
     <main class="game-container">
         <GameBoard />
         <div>
-            <GameOptions />
-            <button @click="clickStart"> Start Game </button>
+            <GameOptions @start='clickStart' />
         </div>
     </main>
 </template>
 
-<style>
-</style>
+<style></style>
