@@ -9,7 +9,7 @@ let CONN = null;
 
 export function useWebsocket(id) {
     if (window["WebSocket"]) {
-        CONN = new WebSocket("ws://" + document.location.host + "/game/" + id);
+        CONN = new WebSocket("wss://" + document.location.host + "/game/" + id);
         CONN.onclose = function(event) {
             CONN = null;
         };

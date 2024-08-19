@@ -117,6 +117,8 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 				log.Println("game full")
 				return nil, false
 			}
+            player.Time = game.WhiteTime
+            player.Increment = game.Increment
 		}
 		if ok = ws.Lobby.AddPlayer(player); !ok {
 			log.Println("invalid player")

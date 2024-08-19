@@ -153,6 +153,9 @@ func (g *Game) play() {
 					if status, over := g.Board.GameOver(); over {
 						out = g.Out(GAME_OVER, move, pid, status)
 						g.Lobby.Clean(g.ID, g.White.ID, g.Black.ID)
+						g.White.Move <- out
+						g.Black.Move <- out
+						return
 					} else {
 						if g.Board.Turn() == chess.WHITE {
 							g.BlackTime += g.Increment
@@ -160,9 +163,9 @@ func (g *Game) play() {
 							g.WhiteTime += g.Increment
 						}
 						out = g.Out(MOVE, move, pid, "")
+						g.White.Move <- out
+						g.Black.Move <- out
 					}
-					g.White.Move <- out
-					g.Black.Move <- out
 				} else {
 					out := g.Out(INVALID_MOVE, "", pid, "")
 					if pid == g.White.ID {
