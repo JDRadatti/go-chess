@@ -35,24 +35,23 @@ func HandlePlay(w http.ResponseWriter, r *http.Request, lobby *websocket.Lobby) 
 
 	playerID := gameRequest.PlayerID
 	if err := uuid.Validate(playerID); err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
+		playerID = websocket.GenerateID()
 	}
 
 	player := lobby.GetOrCreatePlayer(playerID, gameRequest.Time, gameRequest.Increment)
-	lobby.PlayerPool <- player
+	if player.Game == nil {
+		lobby.PlayerPool <- player
 
-	<-player.InGame // wait for match making.
-	game := player.Game
-	if game == nil {
-		http.Error(w, "", http.StatusBadRequest)
-		return
-	}
+		<-player.InGame // wait for match making.
+		if player.Game == nil {
+			http.Error(w, websocket.MATCHMAKING_ERROR, http.StatusBadRequest)
+		}
+	} 
 
 	payload := GameAccepted{
-		GameID:   game.ID,
+		GameID:   player.Game.ID,
 		PlayerID: player.ID,
-		Color:    game.ColorFromPID(player.ID),
+		Color:    player.Game.ColorFromPID(player.ID),
 	}
 
 	marshled, err := json.Marshal(payload)
