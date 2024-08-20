@@ -111,7 +111,12 @@ func (g *Game) play() {
 	<-g.Start // Wait for game to start
 
 	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	defer func() {
+		ticker.Stop()
+        g.White.LeaveGame()
+        g.Black.LeaveGame()
+		log.Println("game ended")
+	}()
 
 	for {
 		select {
@@ -121,6 +126,7 @@ func (g *Game) play() {
 				// game over
 				out := g.Out(GAME_OVER, "", "", "on time")
 				g.Lobby.Clean(g.ID, g.White.ID, g.Black.ID)
+				log.Println("game ended on time")
 				g.White.Move <- out
 				g.Black.Move <- out
 				return
@@ -175,9 +181,6 @@ func (g *Game) play() {
 					}
 				}
 			}
-
-		default:
-			continue
 		}
 	}
 }

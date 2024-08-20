@@ -44,6 +44,10 @@ func HandlePlay(w http.ResponseWriter, r *http.Request, lobby *websocket.Lobby) 
 
 	<-player.InGame // wait for match making.
 	game := player.Game
+	if game == nil {
+		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
 
 	payload := GameAccepted{
 		GameID:   game.ID,

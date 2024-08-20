@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"log"
+	"time"
 )
 
 type Player struct {
@@ -20,8 +21,12 @@ type Player struct {
 }
 
 var (
-	messageType        = websocket.TextMessage
-	matchMakingMaxWait = 60 // seconds
+	messageType              = websocket.TextMessage
+	matchmakingMaxWait       = 180 // seconds
+	writeWait                = 10 * time.Second
+	pongWait                 = 60 * time.Second
+	pingPeriod               = (pongWait * 9) / 10
+	maxMessageSize     int64 = 512
 )
 
 func NewPlayer(l *Lobby, conn *websocket.Conn, time int, increment int) *Player {
@@ -33,6 +38,14 @@ func NewPlayer(l *Lobby, conn *websocket.Conn, time int, increment int) *Player 
 		Time:      time,
 		Increment: increment,
 	}
+}
+
+func (p *Player) LeaveGame() {
+	p.Game = nil
+	p.Time = 0
+	p.Increment = 0
+	p.InGame = make(chan struct{})
+	p.Move = make(chan *Outbound)
 }
 
 func GenerateID() string {
@@ -47,7 +60,36 @@ func GenerateID() string {
 // All writes to websocket MUST be in this function to avoid
 // concurrent write errors
 func (p *Player) write() {
-	<-p.Game.Start // wait for game to start
+	timer := time.NewTimer(time.Duration(matchmakingMaxWait) * time.Second)
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		timer.Stop()
+		p.Conn.Close()
+	}()
+	log.Println("WAITING.. game requested")
+	select {
+	case <-timer.C:
+		log.Println("Timer finished")
+		joinSuccess := &Outbound{
+			Action:  MATCHMAKING_ERROR,
+			Message: "Matchmaking took too long.",
+		}
+		message, err := json.Marshal(joinSuccess)
+		if err != nil {
+			return
+		}
+
+		if err := p.Conn.WriteMessage(messageType, []byte(message)); err != nil {
+			log.Printf("error: %v", err)
+		}
+		// remove from game
+		return
+	case <-p.Game.Start: // wait for game to start
+		log.Println("game started")
+	}
+	log.Println("GAME STARTED")
+
 	var fen string
 	var turn chess.Player
 	if p.Game.Board != nil {
@@ -74,6 +116,7 @@ func (p *Player) write() {
 	for {
 		select {
 		case out := <-p.Move:
+			p.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			message, err := json.Marshal(out)
 			if err != nil {
 				log.Printf("error: %v", err)
@@ -81,6 +124,12 @@ func (p *Player) write() {
 			}
 			if err := p.Conn.WriteMessage(messageType, []byte(message)); err != nil {
 				log.Printf("error: %v", err)
+				return
+			}
+
+		case <-ticker.C:
+			p.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := p.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
 		}
@@ -91,6 +140,16 @@ func (p *Player) write() {
 // All reads from websocket MUST be in this function to avoid
 // concurrent read errors
 func (p *Player) read() {
+	defer func() {
+		p.Conn.Close()
+		log.Println("READ CLOSE")
+		p.LeaveGame()
+	}()
+
+	p.Conn.SetReadLimit(maxMessageSize)
+	p.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	p.Conn.SetPongHandler(func(string) error { p.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
 	<-p.Game.Start // wait for game to start
 	// From now on, every move must contain a valid playerID
 	// Handle move requests
@@ -116,7 +175,7 @@ func (p *Player) read() {
 		case MOVE:
 			p.Game.Moves <- in
 		default:
-			p.Conn.Close()
+			return
 		}
 	}
 }
