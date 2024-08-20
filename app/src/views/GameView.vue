@@ -50,6 +50,9 @@ onMounted(() => {
             } else if (parsed.Action == "join fail") {
                 alert("game full... redirecting")
                 router.push('/play')
+            } else if (parsed.Action == "matchmaking error") {
+                alert("Matchmaking took too long.")
+                router.push('/play')
             } else if (parsed.Action == "game over") {
                 gameOver.value = true
                 fen.value = parsed.FEN

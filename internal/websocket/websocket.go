@@ -23,6 +23,7 @@ const (
 	GAME_START   = "game start"
 	GAME_OVER    = "game over"
 	TIME_UPDATE  = "time"
+    MATCHMAKING_ERROR = "matchmaking error"
 )
 
 type Inbound struct {
