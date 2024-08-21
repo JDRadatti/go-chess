@@ -18,6 +18,13 @@ var (
 
 type PlayerID string
 
+func (pid PlayerID) validate() bool {
+	if err := uuid.Validate(string(pid)); err != nil {
+		return true
+	}
+	return false
+}
+
 type Player struct {
 	id    PlayerID
 	game  *Game
