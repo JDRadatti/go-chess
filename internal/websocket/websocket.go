@@ -91,16 +91,6 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 	}
 
 	// Send join success
-	joinSuccess := &Outbound{
-		Action:    JOIN_SUCCESS,
-		PlayerID:  player.ID,
-		GameID:    player.Game.ID,
-		Color:     player.Game.ColorFromPID(player.ID),
-		WhiteTime: player.Game.WhiteTime,
-		BlackTime: player.Game.BlackTime,
-		Increment: player.Game.Increment,
-		Turn:      player.Game.Board.Turn(),
-	}
 	message, err = json.Marshal(joinSuccess)
 	if err != nil {
 		log.Println("server error")
@@ -114,4 +104,12 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 
 	player.Conn = conn
 	return player, true
+
+}
+
+func handshakeFail() {
+}
+func handshakeSuccess(g *Game) *Outbound {
+    g.out()
+
 }
