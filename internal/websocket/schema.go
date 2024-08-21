@@ -26,23 +26,23 @@ const ( // outgoing status
 )
 
 type Inbound struct {
-	action   string
-	move     string
-	playerID PlayerID
-	gameID   GameID
+	Action   string 
+	Move     string
+	PlayerID PlayerID
+	GameID   GameID
 }
 
 type Outbound struct {
-	action    string
-	move      string
-	fen       string
-	playerID  PlayerID
-	gameID    GameID
-	whiteTime int
-	blackTime int
-	increment int
-	color     chess.Player
-	turn      chess.Player
+	Action    string
+	Move      string
+	FEN       string
+	PlayerID  PlayerID
+	GameID    GameID
+	WhiteTime int
+	BlackTime int
+	Increment int
+	Player    chess.Player
+	Turn      chess.Player
 }
 
 // GameRequest is sent from the client when wanting to join a game
@@ -56,7 +56,7 @@ type GameRequest struct {
 type GameResponse struct {
 	PlayerID PlayerID
 	GameID   GameID
-	Player    chess.Player
+	Player   chess.Player
 }
 
 func unmarshal(message []byte) (*Inbound, bool) {
@@ -69,7 +69,7 @@ func unmarshal(message []byte) (*Inbound, bool) {
 	return in, true
 }
 
-func Marshal(o *Outbound) ([]byte, bool) {
+func marshal(o *Outbound) ([]byte, bool) {
 
 	message, err := json.Marshal(o)
 	if err != nil {

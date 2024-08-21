@@ -1,8 +1,6 @@
 package websocket
 
 import (
-	"errors"
-	"fmt"
 	"github.com/JDRadatti/reptile/internal/chess"
 	"github.com/google/uuid"
 	"log"
@@ -130,14 +128,14 @@ func (g *Game) full() bool {
 
 func (g *Game) out(action string, pid PlayerID) *Outbound {
 	return &Outbound{
-		action:    action,
-		move:      g.board.LastMove(),
-		playerID:  pid, // Player who made the move
-		gameID:    g.id,
-		fen:       string(g.board.FEN()),
-		turn:      g.board.Turn(),
-		whiteTime: g.timeRemaining[whiteIndex],
-		blackTime: g.timeRemaining[blackIndex],
+		Action:    action,
+		Move:      g.board.LastMove(),
+		PlayerID:  pid, // Player who made the move
+		GameID:    g.id,
+		FEN:       string(g.board.FEN()),
+		Turn:      g.board.Turn(),
+		WhiteTime: g.timeRemaining[whiteIndex],
+		BlackTime: g.timeRemaining[blackIndex],
 	}
 }
 
@@ -177,7 +175,7 @@ func (g *Game) play() {
 				continue
 			}
 
-			player, index, ok := g.playerFromID(moveRequest.playerID)
+			player, index, ok := g.playerFromID(moveRequest.PlayerID)
 			if !ok {
 				continue
 			}

@@ -107,8 +107,8 @@ func (p *Player) read() {
 		}
 
 		if in, ok := unmarshal(message); ok {
-			if p.id != in.playerID {
-				log.Println("invalid player id", p.id, in.playerID)
+			if p.id != in.PlayerID {
+				log.Println("invalid player id", p.id, in.PlayerID)
 				continue // Soft handle invalid ids
 			}
 			p.game.move <- in
