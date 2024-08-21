@@ -2,52 +2,10 @@ package websocket
 
 import (
 	"encoding/json"
-	"github.com/JDRadatti/reptile/internal/chess"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
-	"time"
 )
-
-type Action string
-
-const (
-	JOIN         Action = "join"
-	MOVE         Action = "move"
-	INVALID_MOVE Action = "invalid move"
-)
-
-const (
-	JOIN_SUCCESS = "join success"
-	JOIN_FAIL    = "join fail"
-	GAME_START   = "game start"
-	GAME_OVER    = "game over"
-	TIME_UPDATE  = "time"
-    MATCHMAKING_ERROR = "matchmaking error"
-)
-
-type Inbound struct {
-	Action   Action
-	Move     string
-	PlayerID string
-	GameID   string
-	Time     time.Time
-	Color    int
-}
-
-type Outbound struct {
-	Action    Action
-	Move      string
-	FEN       string
-	PlayerID  string
-	GameID    string
-	WhiteTime int
-	BlackTime int
-	Increment int
-	Color     chess.Player
-	Message   string
-	Turn      chess.Player
-}
 
 type WSHandler struct {
 	Lobby  *Lobby
@@ -118,8 +76,8 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
 				log.Println("game full")
 				return nil, false
 			}
-            player.Time = game.WhiteTime
-            player.Increment = game.Increment
+			player.Time = game.WhiteTime
+			player.Increment = game.Increment
 		}
 		if ok = ws.Lobby.AddPlayer(player); !ok {
 			log.Println("invalid player")

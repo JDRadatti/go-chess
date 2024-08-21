@@ -70,6 +70,14 @@ func NewGame(l *Lobby, time int, increment int) *Game {
 	return newGame
 }
 
+func generateGameID() GameID {
+	uuid, err := uuid.NewRandom()
+	if err != nil {
+		log.Printf("error %s", err)
+	}
+	return GameID(uuid.String()[:8])
+}
+
 func (g *Game) clean() {
 	g.lobby.Clean(g.id, g.playerIDs[whiteIndex], g.playerIDs[blackIndex])
 }
@@ -85,34 +93,51 @@ func (g *Game) playerFromID(playerID PlayerID) (*Player, int, bool) {
 }
 
 func (g *Game) playerIndex(player *Player) (int, bool) {
-	if g.playerIDs[whiteIndex] == player.ID {
+	if g.playerIDs[whiteIndex] == player.id {
 		return whiteIndex, true
-	} else if g.playerIDs[blackIndex] == player.ID {
+	} else if g.playerIDs[blackIndex] == player.id {
 		return blackIndex, true
 	} else {
 		return -1, false
 	}
 }
 
-func generateGameID() GameID {
-	uuid, err := uuid.NewRandom()
-	if err != nil {
-		log.Printf("error %s", err)
+func (g *Game) playerIndexFromID(playerID PlayerID) (int, bool) {
+	if g.playerIDs[whiteIndex] == playerID {
+		return whiteIndex, true
+	} else if g.playerIDs[blackIndex] == playerID {
+		return blackIndex, true
+	} else {
+		return -1, false
 	}
-	return GameID(uuid.String()[:8])
 }
 
-func (g *Game) out(action Action, move string, pid PlayerID, message string) *Outbound {
+func (g *Game) addPlayerID(playerID PlayerID) (int, bool) {
+	if g.playerIDs[whiteIndex] == "" {
+		g.playerIDs[whiteIndex] = playerID
+		return whiteIndex, true
+	} else if g.playerIDs[blackIndex] == "" {
+		g.playerIDs[whiteIndex] = playerID
+		return blackIndex, true
+	} else {
+		return -1, false
+	}
+}
+
+func (g *Game) full() bool {
+	return g.playerIDs[whiteIndex] != "" && g.playerIDs[blackIndex] != ""
+}
+
+func (g *Game) out(action string, pid PlayerID) *Outbound {
 	return &Outbound{
-		Action:    action,
-		Move:      move,
-		PlayerID:  pid, // Player who made the move
-		GameID:    g.id,
-		FEN:       string(g.board.FEN()),
-		Message:   message,
-		Turn:      g.board.Turn(),
-		WhiteTime: g.timeRemaining[whiteIndex],
-		BlackTime: g.timeRemaining[blackIndex],
+		action:    action,
+		move:      g.board.LastMove(),
+		playerID:  pid, // Player who made the move
+		gameID:    g.id,
+		fen:       string(g.board.FEN()),
+		turn:      g.board.Turn(),
+		whiteTime: g.timeRemaining[whiteIndex],
+		blackTime: g.timeRemaining[blackIndex],
 	}
 }
 
@@ -129,12 +154,21 @@ func (g *Game) play() {
 			if index, ok := g.playerIndex(player); ok {
 				g.players[index] = player
 			}
+			if g.full() {
+				startOut := g.out(GAME_START, "")
+				g.players[whiteIndex].send <- startOut
+				g.players[blackIndex].send <- startOut
+				g.state = playing
+			}
 		case player := <-g.leave:
 			if index, ok := g.playerIndex(player); ok {
 				g.players[index] = nil
 				close(player.send)
 			}
 		case <-ticker.C:
+			if g.state != playing {
+				continue
+			}
 			// check game over
 			// send time update
 			// decrement time
@@ -143,7 +177,7 @@ func (g *Game) play() {
 				continue
 			}
 
-			player, index, ok := g.playerFromID(moveRequest.PlayerID)
+			player, index, ok := g.playerFromID(moveRequest.playerID)
 			if !ok {
 				continue
 			}
