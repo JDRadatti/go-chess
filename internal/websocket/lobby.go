@@ -89,6 +89,7 @@ func (l *Lobby) Match(request *GameRequest) *GameResponse {
 		game = g
 	default:
 		game = NewGame(l, request.Time, request.Increment)
+		go game.play()
 		l.GamePool <- game
 	}
 
