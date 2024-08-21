@@ -2,121 +2,98 @@ package websocket
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"strings"
-	"sync"
 	"testing"
+
+	"github.com/JDRadatti/reptile/internal/chess"
+	"github.com/gorilla/websocket"
+	"github.com/stretchr/testify/assert"
 )
 
 type testCase struct {
 	name      string
-	playerIDs []string
-	moves     []string
+	gameID    string
+	playerID  string
+	time      int
+	inc       int
+	inbounds  []*Inbound
+	outbounds []Outbound
 }
 
-// Test two players joining
-// Test four players joining
-// Test one player joinging and timeout
-// Test invalid player id joining
-// Test valid player id joinikng with incorrect game id
-// TestGames: input is a list of a bunch of games, weach witgh a playerIDs, gameID, and moves
-// Test multiple games running at once
-// TestLobby assumes the player already has a client ID recieved from
-
-// Test invalid handshake (no join message)
-// Test not sending the handshake (timeout?)
-// How to know when both players are connected
-// the /token endpoint (simulated with playerIDs)
-func TestLobby(t *testing.T) {
+// valid handshakes:
+// gameID in lobby, no playerID but game not full
+// gameID in lobby, invalid playerID but game not full
+//
+// invalid handshakes:
+// no handshake message
+// invalid handshake message
+// gameID not in lobby/invalid
+// gameID in lobby but game is over
+// gameID in lobby but invalid/not found playerID
+func TestHandshake(t *testing.T) {
+	board := chess.NewBoardClassic()
+	startingFEN := board.FEN()
+    time := 180
+    increment := 0
 	inputs := []testCase{
 		{
-			name:      "two player basic game with one move each",
-			playerIDs: []string{"0", "1"},
-			moves:     []string{"d4", "e4"},
+			name:     "VALID: gameID in lobby, playerID matches",
+			gameID:   "0",
+			playerID: "1",
+			time:     time,
+			inc:      increment,
+			inbounds: []*Inbound{
+				{
+					Action:   JOIN,
+					PlayerID: "1",
+				},
+			},
+			outbounds: []Outbound{
+				{
+					Action:   JOIN_SUCCESS,
+					FEN:      string(startingFEN),
+                    WhiteTime: time,
+                    BlackTime: time,
+                    Increment: increment,
+					PlayerID: "1",
+					GameID:   "0",
+				},
+			},
 		},
 	}
 
 	for _, tt := range inputs {
 		t.Run(tt.name, func(t *testing.T) {
 			l := NewLobby()
-			go l.Run()
+			game := NewGame(l, tt.time, tt.inc)
+			game.id = GameID(tt.gameID)
+			l.Join(PlayerID(tt.playerID), game)
 
-			var wg sync.WaitGroup
-			for _, playerID := range tt.playerIDs {
-				// simulate play requests to lobby
-				player := l.GetOrCreatePlayer(playerID)
-				l.PlayerPool <- player
-				<-player.InGame // wait for match making.
-
-				p, ok := l.Players[playerID]
-				assert.Equal(t, ok, true)
-				assert.Equal(t, p.ID, playerID)
-
-                // create connection
-				wsHandler := &WSHandler{
-					Lobby:  l,
-					GameID: p.Game.ID,
-				}
-				s, conn := newWSServer(t, wsHandler)
-				defer conn.Close()
-				defer s.Close()
-
-                // simulate game
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					runGame(t, conn, player, tt)
-				}()
-
+			// create connection
+			wsHandler := &WSHandler{
+				Lobby:  l,
+				GameID: GameID(tt.gameID),
 			}
-			wg.Wait()
+			s, conn := newWSServer(t, wsHandler)
+			defer conn.Close()
+			defer s.Close()
+
+			for i, inbound := range tt.inbounds {
+				sendMessage(t, conn, inbound)
+				joinSuccess := receiveWSMessage(t, conn)
+				assert.Equal(t, tt.outbounds[i], joinSuccess)
+			}
+
+			// Clean and test Clean worked
+			l.Clean(game.id, PlayerID(tt.playerID), "")
+			_, ok := l.Players[PlayerID(tt.playerID)]
+			assert.Equal(t, false, ok)
+			_, ok = l.Games[GameID(tt.gameID)]
+			assert.Equal(t, false, ok)
 		})
 	}
-}
-
-func runGame(t *testing.T, conn *websocket.Conn, player *Player, tt testCase) {
-	t.Helper()
-
-	joinRequest := Inbound{
-		Action:   JOIN,
-		PlayerID: player.ID,
-	}
-	sendMessage(t, conn, joinRequest)
-	joinSuccess := receiveWSMessage(t, conn)
-	assert.Equal(t, string(joinSuccess.Action), JOIN_SUCCESS)
-
-	color := player.Game.ColorFromPID(player.ID)
-
-	for i := 0; i < len(tt.moves); i++ { // simulate game
-		// Send message when it's player's move
-		expectedPlayerID := i % 2
-		if expectedPlayerID == color {
-			moveRequest := Inbound{
-				Action:   MOVE,
-				Move:     tt.moves[i],
-				PlayerID: player.ID,
-				GameID:   player.Game.ID,
-			}
-			sendMessage(t, conn, moveRequest)
-		}
-		// receive
-		// Should recieve a move confirmation if player sends a move
-		// or if opponent sends a move
-		expectedOut := Outbound{
-			Action:   MOVE,
-			Move:     tt.moves[i],
-			GameID:   player.Game.ID,
-			PlayerID: strconv.Itoa(expectedPlayerID),
-		}
-		actualOut := receiveWSMessage(t, conn)
-		assert.Equal(t, expectedOut, actualOut)
-	}
-
-	assert.Equal(t, tt.moves, player.Game.AllMoves)
 }
 
 func newWSServer(t *testing.T, h http.Handler) (*httptest.Server, *websocket.Conn) {
@@ -144,7 +121,7 @@ func httpToWs(t *testing.T, url string) string {
 	return url
 }
 
-func sendMessage(t *testing.T, conn *websocket.Conn, msg Inbound) {
+func sendMessage(t *testing.T, conn *websocket.Conn, msg *Inbound) {
 	t.Helper()
 
 	m, err := json.Marshal(msg)

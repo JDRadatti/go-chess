@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
@@ -9,7 +8,7 @@ import (
 
 type WSHandler struct {
 	Lobby  *Lobby
-	GameID string
+	GameID GameID
 }
 
 var upgrader = websocket.Upgrader{
@@ -24,92 +23,84 @@ func (ws *WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if player, ok := ws.handshake(conn); ok {
+	player, response, ok := ws.handshake(conn)
+	if ok {
 		go player.write()
 		go player.read()
-	} else {
-		// Send join fail
-		defer conn.Close()
-		joinSuccess := &Outbound{
-			Action: JOIN_FAIL,
-		}
-		message, err := json.Marshal(joinSuccess)
-		if err != nil {
-			return
-		}
+	}
 
-		if err := conn.WriteMessage(messageType, []byte(message)); err != nil {
+	if message, ok := marshal(response); ok {
+		if err := conn.WriteMessage(messageType, message); err != nil {
 			log.Printf("error: %v", err)
 		}
+	} else {
+		log.Println(err)
+		return
 	}
+
 }
 
-func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, bool) {
+func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, *Outbound, bool) {
 
-	// Get player from lobby using PlayerID sent from client.
-	// Client MUST send the playerID on connect
 	_, message, err := conn.ReadMessage()
 	if err != nil {
 		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 			log.Printf("error: %v", err)
 		}
-		return nil, false
+		return nil, handshakeFail(), false
 	}
 
-	in := &Inbound{}
-	err = json.Unmarshal(message, in)
-	if err != nil {
+	in, ok := unmarshal(message)
+	if !ok || in.Action != JOIN {
 		log.Printf("error: %v", err)
-		return nil, false
-	}
-	if in.Action != JOIN {
-		log.Printf("action must be join")
-		return nil, false
+		return nil, handshakeFail(), false
 	}
 
-	player, ok := ws.Lobby.GetPlayer(in.PlayerID)
-	if !ok {
-		player = NewPlayer(ws.Lobby, conn, 0, 0)
-		player.ID = GenerateID()
-		if game, ok := ws.Lobby.GetGame(ws.GameID); ok {
-			if err = game.addPlayer(player); err != nil {
-				log.Println("game full")
-				return nil, false
-			}
-			player.Time = game.WhiteTime
-			player.Increment = game.Increment
-		}
-		if ok = ws.Lobby.AddPlayer(player); !ok {
-			log.Println("invalid player")
-			return nil, false
+	if game, ok := ws.Lobby.GetGameFromPlayerID(in.PlayerID); ok {
+		if game.id == ws.GameID {
+			return NewPlayer(ws.Lobby, conn, game),
+				handshakeSuccess(in.PlayerID, game),
+				true
+		} else {
+			return nil, handshakeFail(), false
 		}
 	}
 
-	if player.Game == nil || player.Game.ID != ws.GameID {
-		log.Println("invalid game id")
-		return nil, false
+	// Player not already in game (opened game link)
+	if game, ok := ws.Lobby.GetGameFromGameID(ws.GameID); ok {
+
+		if ok := in.PlayerID.validate(); ok {
+			in.PlayerID = GeneratePlayerID()
+		}
+
+		if _, ok := game.addPlayerID(in.PlayerID); !ok {
+			return nil, handshakeFail(), false
+		}
+
+		ws.Lobby.Join(in.PlayerID, game)
+
+		return NewPlayer(ws.Lobby, conn, game),
+			handshakeSuccess(in.PlayerID, game),
+			true
 	}
 
-	// Send join success
-	message, err = json.Marshal(joinSuccess)
-	if err != nil {
-		log.Println("server error")
-		return nil, false
-	}
-
-	if err := conn.WriteMessage(messageType, []byte(message)); err != nil {
-		log.Printf("error: %v", err)
-		return nil, false
-	}
-
-	player.Conn = conn
-	return player, true
-
+	return nil, handshakeFail(), false
 }
 
-func handshakeFail() {
+func handshakeFail() *Outbound {
+	return &Outbound{
+		Action: JOIN_FAIL,
+	}
 }
-func handshakeSuccess(g *Game) *Outbound {
-    g.out()
 
+func handshakeSuccess(pid PlayerID, g *Game) *Outbound {
+	return &Outbound{
+		Action:    JOIN_SUCCESS,
+		PlayerID:  pid,
+		GameID:    g.id,
+		FEN:       string(g.board.FEN()),
+		Turn:      g.board.Turn(),
+		WhiteTime: g.timeRemaining[whiteIndex],
+		BlackTime: g.timeRemaining[blackIndex],
+	}
 }
