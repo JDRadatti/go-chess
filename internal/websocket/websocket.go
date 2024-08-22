@@ -24,18 +24,18 @@ func (ws *WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	player, response, ok := ws.handshake(conn)
-	if ok {
-		go player.write()
-		go player.read()
-	}
-
-	if message, ok := marshal(response); ok {
+	if message, success := marshal(response); success {
 		if err := conn.WriteMessage(messageType, message); err != nil {
 			log.Printf("error: %v", err)
 		}
 	} else {
 		log.Println(err)
 		return
+	}
+
+	if ok {
+		go player.write()
+		go player.read()
 	}
 
 }
@@ -102,5 +102,6 @@ func handshakeSuccess(pid PlayerID, g *Game) *Outbound {
 		Turn:      g.board.Turn(),
 		WhiteTime: g.timeRemaining[whiteIndex],
 		BlackTime: g.timeRemaining[blackIndex],
+		Player:    g.playerTypeFromID(pid),
 	}
 }
