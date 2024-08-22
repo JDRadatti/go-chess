@@ -40,6 +40,5 @@ func serveHome(lobby *websocket.Lobby) {
 func main() {
 	flag.Parse()
 	lobby := websocket.NewLobby()
-	go lobby.Run()
 	serveHome(lobby)
 }
