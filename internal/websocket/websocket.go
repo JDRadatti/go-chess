@@ -34,6 +34,7 @@ func (ws *WSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if ok {
+		player.game.join <- player
 		go player.write()
 		go player.read()
 	}
