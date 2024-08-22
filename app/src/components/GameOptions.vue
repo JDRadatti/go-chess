@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const time = ref(180)
+const time = ref(3)
 const increment = ref(0)
 
 const times = ref([1, 3, 5, 10])
