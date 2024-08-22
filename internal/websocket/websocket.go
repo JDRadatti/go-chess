@@ -59,9 +59,9 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, *Outbound, bool) 
 
 	if game, ok := ws.Lobby.GetGameFromPlayerID(in.PlayerID); ok {
 		if game.id == ws.GameID {
-			return NewPlayer(ws.Lobby, conn, game),
-				handshakeSuccess(in.PlayerID, game),
-				true
+			player := NewPlayer(ws.Lobby, conn, game)
+			player.id = in.PlayerID
+			return player, handshakeSuccess(in.PlayerID, game), true
 		} else {
 			return nil, handshakeFail(), false
 		}
@@ -80,9 +80,9 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, *Outbound, bool) 
 
 		ws.Lobby.Join(in.PlayerID, game)
 
-		return NewPlayer(ws.Lobby, conn, game),
-			handshakeSuccess(in.PlayerID, game),
-			true
+		player := NewPlayer(ws.Lobby, conn, game)
+		player.id = in.PlayerID
+		return player, handshakeSuccess(in.PlayerID, game), true
 	}
 
 	return nil, handshakeFail(), false
@@ -103,6 +103,6 @@ func handshakeSuccess(pid PlayerID, g *Game) *Outbound {
 		Turn:      g.board.Turn(),
 		WhiteTime: g.timeRemaining[whiteIndex],
 		BlackTime: g.timeRemaining[blackIndex],
-		Player:    g.playerTypeFromID(pid),
+		Player:    g.playerType(pid),
 	}
 }
