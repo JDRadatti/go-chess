@@ -25,7 +25,7 @@ func NewLobby() *Lobby {
 
 func (l *Lobby) Clean(gid GameID, pid1 PlayerID, pid2 PlayerID) {
 	if _, ok := l.Games[gid]; ok {
-        delete(l.Games, gid)
+		delete(l.Games, gid)
 	}
 	if _, ok := l.Players[pid1]; ok {
 		delete(l.Players, pid1)
@@ -46,6 +46,9 @@ func (l *Lobby) GetGameFromPlayerID(id PlayerID) (*Game, bool) {
 }
 
 func (l *Lobby) Join(playerID PlayerID, game *Game) bool {
+    if game == nil {
+        return false
+    }
 	if _, ok := l.Players[playerID]; ok {
 		return false
 	}
