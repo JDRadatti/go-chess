@@ -20,7 +20,7 @@ type testCase struct {
 	time      int
 	inc       int
 	gameID    string
-	playerID  []string
+	playerID  []PlayerID
 	join      []bool // join[i] true if player i should join before handshake
 	inbounds  [][]*Inbound
 	outbounds [][]Outbound // "*" as outbound.playerID means any valid uuid
@@ -41,107 +41,96 @@ func TestHandshake(t *testing.T) {
 	startingFEN := board.FEN()
 	time := 180
 	increment := 0
+	players := 3
+	playerIDs := make([]PlayerID, players)
+	joins := make([]*Inbound, players)
+	success := make([]Outbound, players)
+	fail := make([]Outbound, players)
+	player := []chess.Player{chess.WHITE, chess.BLACK, chess.INVALID_PLAYER}
+	for i := range players {
+		playerID := GeneratePlayerID()
+		j := &Inbound{
+			Action:   JOIN,
+			PlayerID: playerID,
+		}
+		s := Outbound{
+			Action:    JOIN_SUCCESS,
+			FEN:       string(startingFEN),
+			WhiteTime: time,
+			BlackTime: time,
+			Increment: increment,
+			PlayerID:  playerID,
+			GameID:    "0",
+			Player:    player[i],
+		}
+		f := Outbound{
+			Action: JOIN_FAIL,
+		}
+		playerIDs[i] = playerID
+		joins[i] = j
+		success[i] = s
+		fail[i] = f
+	}
+
 	inputs := []testCase{
 		{
 			name:     "VALID: both players already in game. valid join request.",
 			gameID:   "0",
-			playerID: []string{"1", "2"},
+			playerID: []PlayerID{playerIDs[0], playerIDs[1]},
 			join:     []bool{true, true},
 			time:     time,
 			inc:      increment,
 			inbounds: [][]*Inbound{
-				{
-					{
-						Action:   JOIN,
-						PlayerID: "1",
-					},
-				},
-				{
-					{
-						Action:   JOIN,
-						PlayerID: "2",
-					},
-				},
+				{joins[0]},
+				{joins[1]},
 			},
 			outbounds: [][]Outbound{
-				{
-					{
-						Action:    JOIN_SUCCESS,
-						FEN:       string(startingFEN),
-						WhiteTime: time,
-						BlackTime: time,
-						Increment: increment,
-						PlayerID:  "1",
-						GameID:    "0",
-					},
-				},
-				{
-					{
-						Action:    JOIN_SUCCESS,
-						FEN:       string(startingFEN),
-						WhiteTime: time,
-						BlackTime: time,
-						Increment: increment,
-						PlayerID:  "2",
-						GameID:    "0",
-					},
-				},
+				{success[0]},
+				{success[1]},
 			},
 		},
 		{
 			name:     "VALID: one player not already in game. valid join request. random id.",
 			gameID:   "0",
-			playerID: []string{"1", "2"},
+			playerID: []PlayerID{playerIDs[0], playerIDs[1]},
 			join:     []bool{true, false},
 			time:     time,
 			inc:      increment,
 			inbounds: [][]*Inbound{
-				{
-					{
-						Action:   JOIN,
-						PlayerID: "1",
-					},
-				},
-				{
-					{
-						Action:   JOIN,
-						PlayerID: "2",
-					},
-				},
+				{joins[0]},
+				{joins[1]},
 			},
 			outbounds: [][]Outbound{
-				{
-					{
-						Action:    JOIN_SUCCESS,
-						FEN:       string(startingFEN),
-						WhiteTime: time,
-						BlackTime: time,
-						Increment: increment,
-						PlayerID:  "1",
-						GameID:    "0",
-					},
-				},
-				{
-					{
-						Action:    JOIN_SUCCESS,
-						FEN:       string(startingFEN),
-						WhiteTime: time,
-						BlackTime: time,
-						Increment: increment,
-						PlayerID:  "*",
-						GameID:    "0",
-					},
-				},
+				{success[0]},
+				{success[1]},
+			},
+		},
+		{
+			name:     "VALID: two valid join requests and a third fail when joining same gameID.",
+			gameID:   "0",
+			playerID: []PlayerID{playerIDs[0], playerIDs[1], playerIDs[2]},
+			join:     []bool{true, false, false},
+			time:     time,
+			inc:      increment,
+			inbounds: [][]*Inbound{
+				{joins[0]},
+				{joins[1]},
+				{joins[2]},
+			},
+			outbounds: [][]Outbound{
+				{success[0]},
+				{success[1]},
+				{fail[2]},
 			},
 		},
 	}
 
 	for _, tt := range inputs {
-		t.Run(tt.name, func(t *testing.T) {
-			l := NewLobby()
-			game := NewGame(l, tt.time, tt.inc)
-			game.id = GameID(tt.gameID)
+		l := NewLobby()
+		game := NewGame(l, tt.time, tt.inc)
+		game.id = GameID(tt.gameID)
 
+		t.Run(tt.name, func(t *testing.T) {
 			for i := range tt.inbounds {
 				// create connection
 				wsHandler := &WSHandler{
@@ -149,11 +138,10 @@ func TestHandshake(t *testing.T) {
 					GameID: GameID(tt.gameID),
 				}
 				s, conn := newWSServer(t, wsHandler)
-				defer conn.Close()
-				defer s.Close()
 
 				if tt.join[i] {
-					l.Join(PlayerID(tt.playerID[i]), game)
+					l.Join(tt.playerID[i], game)
+					game.addPlayerID(tt.playerID[i])
 				}
 				for j, inbound := range tt.inbounds[i] {
 					sendMessage(t, conn, inbound)
@@ -170,7 +158,10 @@ func TestHandshake(t *testing.T) {
 						}
 					}
 					assert.Equal(t, tt.outbounds[i][j], joinSuccess)
+					conn.Close()
+					s.Close()
 				}
+
 			}
 
 			// Clean and test Clean worked
