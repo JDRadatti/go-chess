@@ -79,7 +79,7 @@ func (l *Lobby) Fail() *GameResponse {
 func (l *Lobby) Match(request *GameRequest) *GameResponse {
 	if game, ok := l.GetGameFromPlayerID(request.PlayerID); ok {
 		log.Printf("player %s already in game %s", request.PlayerID, game.id)
-		if index, ok := game.playerIndexFromID(request.PlayerID); ok {
+		if index, ok := game.playerIndex(request.PlayerID); ok {
 			return l.Success(request.PlayerID, game.id, index)
 		} else {
 			return l.Fail()
@@ -96,7 +96,6 @@ func (l *Lobby) Match(request *GameRequest) *GameResponse {
 	}
 
 	if index, ok := game.addPlayerID(request.PlayerID); ok {
-		go game.play()
 		l.Join(request.PlayerID, game)
 		return l.Success(request.PlayerID, game.id, index)
 	} else {
