@@ -25,7 +25,7 @@ func NewLobby() *Lobby {
 
 func (l *Lobby) Clean(gid GameID, pid1 PlayerID, pid2 PlayerID) {
 	if _, ok := l.Games[gid]; ok {
-		delete(l.Games, gid)
+        delete(l.Games, gid)
 	}
 	if _, ok := l.Players[pid1]; ok {
 		delete(l.Players, pid1)
