@@ -53,11 +53,11 @@ onMounted(() => {
             } else if (parsed.Action == "matchmaking_error") {
                 alert("Matchmaking took too long.")
                 router.push('/play')
-            } else if (parsed.Action == "game_over") {
+            } else if (parsed.Action == "game_end") {
                 gameOver.value = true
                 fen.value = parsed.FEN
                 move.value = parsed.Move
-            } else if (parsed.Action == "time") {
+            } else if (parsed.Action == "time_update") {
                 whiteTime.value = parsed.WhiteTime
                 blackTime.value = parsed.BlackTime
             }
