@@ -16,18 +16,20 @@ import (
 // there can be x number of players. x should be the length of all
 // slices
 type testCase struct {
-	name      string
-	time      int
-	inc       int
-	gameID    string
-	playerID  []PlayerID
-	join      []bool // join[i] true if player i should join before handshake
-	inbounds  [][]*Inbound
-	outbounds [][]Outbound // "*" as outbound.playerID means any valid uuid
+	name       string
+	time       int
+	inc        int
+	gameID     string
+	createGame bool
+	playerID   []PlayerID
+	join       []bool // join[i] true if player i should join before handshake
+	inbounds   [][]*Inbound
+	outbounds  [][]Outbound // "*" as outbound.playerID means any valid uuid
 }
 
 // valid handshakes:
 // gameID in lobby, no playerID but game not full
+// gameID in lobby, playerID in game
 // gameID in lobby, invalid playerID but game not full
 //
 // invalid handshakes:
@@ -74,12 +76,13 @@ func TestHandshake(t *testing.T) {
 
 	inputs := []testCase{
 		{
-			name:     "VALID: both players already in game. valid join request.",
-			gameID:   "0",
-			playerID: []PlayerID{playerIDs[0], playerIDs[1]},
-			join:     []bool{true, true},
-			time:     time,
-			inc:      increment,
+			name:       "both players already in game. valid join request.",
+			gameID:     "0",
+			createGame: true,
+			playerID:   []PlayerID{playerIDs[0], playerIDs[1]},
+			join:       []bool{true, true},
+			time:       time,
+			inc:        increment,
 			inbounds: [][]*Inbound{
 				{joins[0]},
 				{joins[1]},
@@ -90,12 +93,13 @@ func TestHandshake(t *testing.T) {
 			},
 		},
 		{
-			name:     "VALID: one player not already in game. valid join request. random id.",
-			gameID:   "0",
-			playerID: []PlayerID{playerIDs[0], playerIDs[1]},
-			join:     []bool{true, false},
-			time:     time,
-			inc:      increment,
+			name:       "one player not already in game. valid join request. random id.",
+			gameID:     "0",
+			createGame: true,
+			playerID:   []PlayerID{playerIDs[0], playerIDs[1]},
+			join:       []bool{true, false},
+			time:       time,
+			inc:        increment,
 			inbounds: [][]*Inbound{
 				{joins[0]},
 				{joins[1]},
@@ -106,12 +110,13 @@ func TestHandshake(t *testing.T) {
 			},
 		},
 		{
-			name:     "VALID: two valid join requests and a third fail when joining same gameID.",
-			gameID:   "0",
-			playerID: []PlayerID{playerIDs[0], playerIDs[1], playerIDs[2]},
-			join:     []bool{true, false, false},
-			time:     time,
-			inc:      increment,
+			name:       "two valid join requests and a third fail when joining same gameID.",
+			gameID:     "0",
+			createGame: true,
+			playerID:   []PlayerID{playerIDs[0], playerIDs[1], playerIDs[2]},
+			join:       []bool{true, false, false},
+			time:       time,
+			inc:        increment,
 			inbounds: [][]*Inbound{
 				{joins[0]},
 				{joins[1]},
@@ -123,12 +128,34 @@ func TestHandshake(t *testing.T) {
 				{fail[2]},
 			},
 		},
+		{
+			name:       "all players join non-existing game",
+			gameID:     "0",
+			createGame: false,
+			playerID:   []PlayerID{playerIDs[0], playerIDs[1], playerIDs[2]},
+			join:       []bool{false, false, false},
+			time:       time,
+			inc:        increment,
+			inbounds: [][]*Inbound{
+				{joins[0]},
+				{joins[1]},
+				{joins[2]},
+			},
+			outbounds: [][]Outbound{
+				{fail[0]},
+				{fail[1]},
+				{fail[2]},
+			},
+		},
 	}
 
 	for _, tt := range inputs {
 		l := NewLobby()
-		game := NewGame(l, tt.time, tt.inc)
-		game.id = GameID(tt.gameID)
+		var game *Game
+		if tt.createGame {
+			game = NewGame(l, tt.time, tt.inc)
+			game.id = GameID(tt.gameID)
+		}
 
 		t.Run(tt.name, func(t *testing.T) {
 			for i := range tt.inbounds {
@@ -139,7 +166,7 @@ func TestHandshake(t *testing.T) {
 				}
 				s, conn := newWSServer(t, wsHandler)
 
-				if tt.join[i] {
+				if game != nil && tt.join[i] {
 					l.Join(tt.playerID[i], game)
 					game.addPlayerID(tt.playerID[i])
 				}
@@ -166,7 +193,7 @@ func TestHandshake(t *testing.T) {
 
 			// Clean and test Clean worked
 			for i := range tt.inbounds {
-				l.Clean(game.id, PlayerID(tt.playerID[i]), "")
+				l.Clean(GameID(tt.gameID), PlayerID(tt.playerID[i]), "")
 				_, ok := l.Players[PlayerID(tt.playerID[i])]
 				assert.Equal(t, false, ok)
 				_, ok = l.Games[GameID(tt.gameID)]
