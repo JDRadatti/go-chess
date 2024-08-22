@@ -44,7 +44,7 @@ onMounted(() => {
                 started.value = true
                 waiting.value = false
                 fen.value = parsed.FEN
-            } else if (parsed.Action == "move") {
+            } else if (parsed.Action == "move_success") {
                 move.value = parsed.Move
                 fen.value = parsed.FEN
             } else if (parsed.Action == "join_fail") {
