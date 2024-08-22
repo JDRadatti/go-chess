@@ -58,8 +58,12 @@ func NewGame(l *Lobby, time int, increment int) *Game {
 	newGame := &Game{
 		id:            generateGameID(),
 		move:          make(chan *Inbound),
+		join:          make(chan *Player),
+		leave:         make(chan *Player),
 		board:         &board,
 		timeRemaining: [2]int{time, time},
+		players:       [2]*Player{},
+		playerIDs:     [2]PlayerID{},
 		increment:     increment,
 		lobby:         l,
 		state:         waiting,
@@ -90,25 +94,15 @@ func (g *Game) playerFromID(playerID PlayerID) (*Player, int, bool) {
 	}
 }
 
-func (g *Game) playerTypeFromID(playerID PlayerID) chess.Player {
-	index, _ := g.playerIndexFromID(playerID)
+func (g *Game) playerType(playerID PlayerID) chess.Player {
+	index, _ := g.playerIndex(playerID)
 	return chess.Player(index)
 }
 
-func (g *Game) playerIndexFromID(playerID PlayerID) (int, bool) {
+func (g *Game) playerIndex(playerID PlayerID) (int, bool) {
 	if g.playerIDs[whiteIndex] == playerID {
 		return whiteIndex, true
 	} else if g.playerIDs[blackIndex] == playerID {
-		return blackIndex, true
-	} else {
-		return -1, false
-	}
-}
-
-func (g *Game) playerIndexFromPlayer(player *Player) (int, bool) {
-	if g.playerIDs[whiteIndex] == player.id {
-		return whiteIndex, true
-	} else if g.playerIDs[blackIndex] == player.id {
 		return blackIndex, true
 	} else {
 		return -1, false
@@ -127,8 +121,8 @@ func (g *Game) addPlayerID(playerID PlayerID) (int, bool) {
 	}
 }
 
-func (g *Game) full() bool {
-	return g.playerIDs[whiteIndex] != "" && g.playerIDs[blackIndex] != ""
+func (g *Game) bothPlayersConnected() bool {
+	return g.players[whiteIndex] != nil && g.players[blackIndex] != nil
 }
 
 func (g *Game) out(action string, pid PlayerID) *Outbound {
@@ -154,17 +148,17 @@ func (g *Game) play() {
 	for {
 		select {
 		case player := <-g.join:
-			if index, ok := g.playerIndexFromPlayer(player); ok {
+			if index, ok := g.playerIndex(player.id); ok {
 				g.players[index] = player
 			}
-			if g.full() {
+			if g.bothPlayersConnected() {
 				startOut := g.out(GAME_START, "")
 				g.players[whiteIndex].send <- startOut
 				g.players[blackIndex].send <- startOut
 				g.state = playing
 			}
 		case player := <-g.leave:
-			if index, ok := g.playerIndexFromPlayer(player); ok {
+			if index, ok := g.playerIndex(player.id); ok {
 				g.players[index] = nil
 				close(player.send)
 			}
