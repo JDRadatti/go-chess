@@ -13,15 +13,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// there can be x number of players. x should be the length of all
+// slices
 type testCase struct {
 	name      string
 	time      int
 	inc       int
 	gameID    string
-	playerID  [2]string
-	join      [2]bool // join[i] true if player i should join before handshake
-	inbounds  [2][]*Inbound
-	outbounds [2][]Outbound // "*" as outbound.playerID means any valid uuid
+	playerID  []string
+	join      []bool // join[i] true if player i should join before handshake
+	inbounds  [][]*Inbound
+	outbounds [][]Outbound // "*" as outbound.playerID means any valid uuid
 }
 
 // valid handshakes:
@@ -43,11 +45,11 @@ func TestHandshake(t *testing.T) {
 		{
 			name:     "VALID: both players already in game. valid join request.",
 			gameID:   "0",
-			playerID: [2]string{"1", "2"},
-			join:     [2]bool{true, true},
+			playerID: []string{"1", "2"},
+			join:     []bool{true, true},
 			time:     time,
 			inc:      increment,
-			inbounds: [2][]*Inbound{
+			inbounds: [][]*Inbound{
 				{
 					{
 						Action:   JOIN,
@@ -61,7 +63,7 @@ func TestHandshake(t *testing.T) {
 					},
 				},
 			},
-			outbounds: [2][]Outbound{
+			outbounds: [][]Outbound{
 				{
 					{
 						Action:    JOIN_SUCCESS,
@@ -89,11 +91,11 @@ func TestHandshake(t *testing.T) {
 		{
 			name:     "VALID: one player not already in game. valid join request. random id.",
 			gameID:   "0",
-			playerID: [2]string{"1", "2"},
-			join:     [2]bool{true, false},
+			playerID: []string{"1", "2"},
+			join:     []bool{true, false},
 			time:     time,
 			inc:      increment,
-			inbounds: [2][]*Inbound{
+			inbounds: [][]*Inbound{
 				{
 					{
 						Action:   JOIN,
@@ -107,7 +109,7 @@ func TestHandshake(t *testing.T) {
 					},
 				},
 			},
-			outbounds: [2][]Outbound{
+			outbounds: [][]Outbound{
 				{
 					{
 						Action:    JOIN_SUCCESS,
