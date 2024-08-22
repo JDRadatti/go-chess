@@ -187,16 +187,27 @@ func (g *Game) play() {
 			}
 
 			player, index, ok := g.playerFromID(moveRequest.PlayerID)
-			if !ok {
+			if !ok || index != g.currentPlayerIndex() {
 				continue
 			}
-			//check if move is valid
-			// if valid move, check if game over
-			// move, valid := g.Board.Move(moveRequest.Move)
-			// send move to client (Diff if game over or not)
-			// increment players time
 
-			log.Println(player, index)
+			move, valid := g.board.Move(moveRequest.Move)
+			if valid {
+				out := g.out(MOVE_SUCCESS, player.id)
+				out.Move = move
+				g.players[whiteIndex].send <- out
+				g.players[blackIndex].send <- out
+			}
+
+			if _, over := g.board.GameOver(); over {
+				out := g.out(GAME_END, player.id)
+				g.players[whiteIndex].send <- out
+				g.players[blackIndex].send <- out
+                return
+			}
+
+			g.timeRemaining[index] += g.increment
+
 		}
 	}
 }
