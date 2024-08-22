@@ -46,9 +46,9 @@ func (l *Lobby) GetGameFromPlayerID(id PlayerID) (*Game, bool) {
 }
 
 func (l *Lobby) Join(playerID PlayerID, game *Game) bool {
-    if game == nil {
-        return false
-    }
+	if game == nil {
+		return false
+	}
 	if _, ok := l.Players[playerID]; ok {
 		return false
 	}
@@ -92,11 +92,11 @@ func (l *Lobby) Match(request *GameRequest) *GameResponse {
 		game = g
 	default:
 		game = NewGame(l, request.Time, request.Increment)
-		go game.play()
 		l.GamePool <- game
 	}
 
 	if index, ok := game.addPlayerID(request.PlayerID); ok {
+		go game.play()
 		l.Join(request.PlayerID, game)
 		return l.Success(request.PlayerID, game.id, index)
 	} else {
