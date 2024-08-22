@@ -121,6 +121,10 @@ func (g *Game) addPlayerID(playerID PlayerID) (int, bool) {
 	}
 }
 
+func (g *Game) currentPlayerIndex() int {
+	return int(g.board.Turn())
+}
+
 func (g *Game) bothPlayersConnected() bool {
 	return g.players[whiteIndex] != nil && g.players[blackIndex] != nil
 }
@@ -166,9 +170,17 @@ func (g *Game) play() {
 			if g.state != playing {
 				continue
 			}
-			// check game over
-			// send time update
-			// decrement time
+			currentI := g.currentPlayerIndex()
+			if g.timeRemaining[currentI] < 0 {
+				out := g.out(GAME_END, "")
+				g.players[whiteIndex].send <- out
+				g.players[blackIndex].send <- out
+				return
+			}
+			out := g.out(TIME_UPDATE, "")
+			g.players[whiteIndex].send <- out
+			g.players[blackIndex].send <- out
+			g.timeRemaining[currentI]--
 		case moveRequest := <-g.move:
 			if g.state != playing {
 				continue
