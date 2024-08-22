@@ -60,14 +60,6 @@ func (p *Player) write() {
 		p.conn.Close()
 	}()
 
-	// Send join success message
-	if message, ok := marshal(p.game.out(JOIN_SUCCESS, p.id)); ok {
-		if err := p.conn.WriteMessage(messageType, message); err != nil {
-			log.Printf("error: %v", err)
-			return
-		}
-	}
-
 	for {
 		select {
 		case out := <-p.send:
