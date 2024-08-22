@@ -32,28 +32,28 @@ onMounted(() => {
         for (var i = 0; i < messages.length; i++) {
             var message = messages[i];
             var parsed = JSON.parse(message)
-            if (parsed.Action == "join success") {
+            if (parsed.Action == "join_success") {
                 localStorage.setItem("playerID", parsed["PlayerID"])
-                color.value = parsed.Color
+                color.value = parsed.Player
                 gameID.value = parsed.GameID;
                 whiteTime.value = parsed.WhiteTime;
                 blackTime.value = parsed.BlackTime;
                 increment.value = parsed.Increment;
                 waiting.value = true
-            } else if (parsed.Action == "game start") {
+            } else if (parsed.Action == "game_start") {
                 started.value = true
                 waiting.value = false
                 fen.value = parsed.FEN
             } else if (parsed.Action == "move") {
                 move.value = parsed.Move
                 fen.value = parsed.FEN
-            } else if (parsed.Action == "join fail") {
+            } else if (parsed.Action == "join_fail") {
                 alert("game full... redirecting")
                 router.push('/play')
-            } else if (parsed.Action == "matchmaking error") {
+            } else if (parsed.Action == "matchmaking_error") {
                 alert("Matchmaking took too long.")
                 router.push('/play')
-            } else if (parsed.Action == "game over") {
+            } else if (parsed.Action == "game_over") {
                 gameOver.value = true
                 fen.value = parsed.FEN
                 move.value = parsed.Move

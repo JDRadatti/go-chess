@@ -20,8 +20,6 @@ export async function startGame(time, increment) {
         time: ((time) ? time : defaultTime),
         increment: ((increment) ? increment : defaultIncrement),
     }).then(response => {
-        console.log("playerID", response.data.PlayerID)
-        setPlayerID(response.data.PlayerID)
         return response.data
     }).catch(error => {
         console.log("ERROR: ", error)
