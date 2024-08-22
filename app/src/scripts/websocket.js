@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { getPlayerID } from './api.js'
 
-const color = ref("")
 const gameID = ref("")
 
 
