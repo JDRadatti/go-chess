@@ -84,20 +84,15 @@ func (g *Game) playerFromID(playerID PlayerID) (*Player, int, bool) {
 	if g.playerIDs[whiteIndex] == playerID {
 		return g.players[whiteIndex], whiteIndex, true
 	} else if g.playerIDs[blackIndex] == playerID {
-		return g.players[whiteIndex], blackIndex, true
+		return g.players[blackIndex], blackIndex, true
 	} else {
 		return nil, -1, false
 	}
 }
 
-func (g *Game) playerIndex(player *Player) (int, bool) {
-	if g.playerIDs[whiteIndex] == player.id {
-		return whiteIndex, true
-	} else if g.playerIDs[blackIndex] == player.id {
-		return blackIndex, true
-	} else {
-		return -1, false
-	}
+func (g *Game) playerTypeFromID(playerID PlayerID) chess.Player {
+	index, _ := g.playerIndexFromID(playerID)
+	return chess.Player(index)
 }
 
 func (g *Game) playerIndexFromID(playerID PlayerID) (int, bool) {
@@ -110,12 +105,22 @@ func (g *Game) playerIndexFromID(playerID PlayerID) (int, bool) {
 	}
 }
 
+func (g *Game) playerIndexFromPlayer(player *Player) (int, bool) {
+	if g.playerIDs[whiteIndex] == player.id {
+		return whiteIndex, true
+	} else if g.playerIDs[blackIndex] == player.id {
+		return blackIndex, true
+	} else {
+		return -1, false
+	}
+}
+
 func (g *Game) addPlayerID(playerID PlayerID) (int, bool) {
 	if g.playerIDs[whiteIndex] == "" {
 		g.playerIDs[whiteIndex] = playerID
 		return whiteIndex, true
 	} else if g.playerIDs[blackIndex] == "" {
-		g.playerIDs[whiteIndex] = playerID
+		g.playerIDs[blackIndex] = playerID
 		return blackIndex, true
 	} else {
 		return -1, false
@@ -149,7 +154,7 @@ func (g *Game) play() {
 	for {
 		select {
 		case player := <-g.join:
-			if index, ok := g.playerIndex(player); ok {
+			if index, ok := g.playerIndexFromPlayer(player); ok {
 				g.players[index] = player
 			}
 			if g.full() {
@@ -159,7 +164,7 @@ func (g *Game) play() {
 				g.state = playing
 			}
 		case player := <-g.leave:
-			if index, ok := g.playerIndex(player); ok {
+			if index, ok := g.playerIndexFromPlayer(player); ok {
 				g.players[index] = nil
 				close(player.send)
 			}
