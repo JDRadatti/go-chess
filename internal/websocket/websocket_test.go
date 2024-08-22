@@ -8,18 +8,20 @@ import (
 	"testing"
 
 	"github.com/JDRadatti/reptile/internal/chess"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
 type testCase struct {
 	name      string
-	gameID    string
-	playerID  string
 	time      int
 	inc       int
-	inbounds  []*Inbound
-	outbounds []Outbound
+	gameID    string
+	playerID  [2]string
+	join      [2]bool // join[i] true if player i should join before handshake
+	inbounds  [2][]*Inbound
+	outbounds [2][]Outbound // "*" as outbound.playerID means any valid uuid
 }
 
 // valid handshakes:
@@ -35,30 +37,98 @@ type testCase struct {
 func TestHandshake(t *testing.T) {
 	board := chess.NewBoardClassic()
 	startingFEN := board.FEN()
-    time := 180
-    increment := 0
+	time := 180
+	increment := 0
 	inputs := []testCase{
 		{
-			name:     "VALID: gameID in lobby, playerID matches",
+			name:     "VALID: both players already in game. valid join request.",
 			gameID:   "0",
-			playerID: "1",
+			playerID: [2]string{"1", "2"},
+			join:     [2]bool{true, true},
 			time:     time,
 			inc:      increment,
-			inbounds: []*Inbound{
+			inbounds: [2][]*Inbound{
 				{
-					Action:   JOIN,
-					PlayerID: "1",
+					{
+						Action:   JOIN,
+						PlayerID: "1",
+					},
+				},
+				{
+					{
+						Action:   JOIN,
+						PlayerID: "2",
+					},
 				},
 			},
-			outbounds: []Outbound{
+			outbounds: [2][]Outbound{
 				{
-					Action:   JOIN_SUCCESS,
-					FEN:      string(startingFEN),
-                    WhiteTime: time,
-                    BlackTime: time,
-                    Increment: increment,
-					PlayerID: "1",
-					GameID:   "0",
+					{
+						Action:    JOIN_SUCCESS,
+						FEN:       string(startingFEN),
+						WhiteTime: time,
+						BlackTime: time,
+						Increment: increment,
+						PlayerID:  "1",
+						GameID:    "0",
+					},
+				},
+				{
+					{
+						Action:    JOIN_SUCCESS,
+						FEN:       string(startingFEN),
+						WhiteTime: time,
+						BlackTime: time,
+						Increment: increment,
+						PlayerID:  "2",
+						GameID:    "0",
+					},
+				},
+			},
+		},
+		{
+			name:     "VALID: one player not already in game. valid join request. random id.",
+			gameID:   "0",
+			playerID: [2]string{"1", "2"},
+			join:     [2]bool{true, false},
+			time:     time,
+			inc:      increment,
+			inbounds: [2][]*Inbound{
+				{
+					{
+						Action:   JOIN,
+						PlayerID: "1",
+					},
+				},
+				{
+					{
+						Action:   JOIN,
+						PlayerID: "2",
+					},
+				},
+			},
+			outbounds: [2][]Outbound{
+				{
+					{
+						Action:    JOIN_SUCCESS,
+						FEN:       string(startingFEN),
+						WhiteTime: time,
+						BlackTime: time,
+						Increment: increment,
+						PlayerID:  "1",
+						GameID:    "0",
+					},
+				},
+				{
+					{
+						Action:    JOIN_SUCCESS,
+						FEN:       string(startingFEN),
+						WhiteTime: time,
+						BlackTime: time,
+						Increment: increment,
+						PlayerID:  "*",
+						GameID:    "0",
+					},
 				},
 			},
 		},
@@ -69,29 +139,46 @@ func TestHandshake(t *testing.T) {
 			l := NewLobby()
 			game := NewGame(l, tt.time, tt.inc)
 			game.id = GameID(tt.gameID)
-			l.Join(PlayerID(tt.playerID), game)
 
-			// create connection
-			wsHandler := &WSHandler{
-				Lobby:  l,
-				GameID: GameID(tt.gameID),
-			}
-			s, conn := newWSServer(t, wsHandler)
-			defer conn.Close()
-			defer s.Close()
+			for i := range tt.inbounds {
+				// create connection
+				wsHandler := &WSHandler{
+					Lobby:  l,
+					GameID: GameID(tt.gameID),
+				}
+				s, conn := newWSServer(t, wsHandler)
+				defer conn.Close()
+				defer s.Close()
 
-			for i, inbound := range tt.inbounds {
-				sendMessage(t, conn, inbound)
-				joinSuccess := receiveWSMessage(t, conn)
-				assert.Equal(t, tt.outbounds[i], joinSuccess)
+				if tt.join[i] {
+					l.Join(PlayerID(tt.playerID[i]), game)
+				}
+				for j, inbound := range tt.inbounds[i] {
+					sendMessage(t, conn, inbound)
+					joinSuccess := receiveWSMessage(t, conn)
+
+					// if playerID = *, set PlayerID to the one returned by
+					// server. the server will send the client a new uuid if
+					// 1. the given uuid is not in a different game
+					// 2. the given game is not full
+					if tt.outbounds[i][j].PlayerID == "*" {
+						tt.outbounds[i][j].PlayerID = joinSuccess.PlayerID
+						if err := uuid.Validate(string(tt.outbounds[i][j].PlayerID)); err != nil {
+							assert.Fail(t, "server sent invalid playerID")
+						}
+					}
+					assert.Equal(t, tt.outbounds[i][j], joinSuccess)
+				}
 			}
 
 			// Clean and test Clean worked
-			l.Clean(game.id, PlayerID(tt.playerID), "")
-			_, ok := l.Players[PlayerID(tt.playerID)]
-			assert.Equal(t, false, ok)
-			_, ok = l.Games[GameID(tt.gameID)]
-			assert.Equal(t, false, ok)
+			for i := range tt.inbounds {
+				l.Clean(game.id, PlayerID(tt.playerID[i]), "")
+				_, ok := l.Players[PlayerID(tt.playerID[i])]
+				assert.Equal(t, false, ok)
+				_, ok = l.Games[GameID(tt.gameID)]
+				assert.Equal(t, false, ok)
+			}
 		})
 	}
 }
