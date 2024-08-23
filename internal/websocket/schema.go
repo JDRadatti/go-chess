@@ -22,6 +22,7 @@ const ( // outgoing status
 	JOIN_FAIL      = "join_fail"
 	GAME_START     = "game_start"
 	GAME_END       = "game_end"
+	GAME_END_TIME  = "game_end_time"
 	MOVE_SUCCESS   = "move_success"
 	MOVE_FAIL      = "move_fail"
 	RESIGN_SUCCESS = "resign_success"

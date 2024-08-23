@@ -198,7 +198,7 @@ func (g *Game) play() {
 			}
 			currentI := g.currentPlayerIndex()
 			if g.timeRemaining[currentI] < 0 {
-				out := g.out(GAME_END, "")
+				out := g.out(GAME_END_TIME, g.playerIDs[currentI])
 				g.sendBoth(out)
 				return
 			}
