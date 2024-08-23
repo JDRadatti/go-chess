@@ -15,6 +15,7 @@ var (
 
 const (
 	defaultTime      = 300
+	maxWaitTime      = 300 // kill game if waiting for opponenet longer than maxWaitTime
 	defaultIncrement = 0
 	whiteIndex       = 0
 	blackIndex       = 1
@@ -89,6 +90,7 @@ func generateGameID() GameID {
 }
 
 func (g *Game) clean() {
+	g.state = over
 	g.lobby.Clean(g.id, g.playerIDs[whiteIndex], g.playerIDs[blackIndex])
 }
 
@@ -167,8 +169,10 @@ func (g *Game) sendToOpponent(out *Outbound, index int) {
 
 func (g *Game) play() {
 	ticker := time.NewTicker(time.Second)
+	timer := time.NewTimer(time.Second * time.Duration(maxWaitTime))
 	defer func() {
 		ticker.Stop()
+		timer.Stop()
 		g.clean()
 	}()
 
@@ -201,6 +205,12 @@ func (g *Game) play() {
 			out := g.out(TIME_UPDATE, "")
 			g.sendBoth(out)
 			g.timeRemaining[currentI]--
+		case <-timer.C:
+			if g.state == waiting {
+				killOut := g.out(GAME_KILL, "")
+				g.sendBoth(killOut)
+				return
+			}
 		case moveRequest := <-g.move:
 			if g.state != playing {
 				continue
@@ -250,12 +260,12 @@ func (g *Game) play() {
 					g.pendingDraw = index
 				} else if g.pendingDraw == (index+1)%2 && drawRequest.Action == DRAW_ACCEPT {
 					out := g.out(DRAW, g.playerIDs[index])
-                    g.sendBoth(out)
+					g.sendBoth(out)
 					return
 				} else if drawRequest.Action == DRAW_DENY {
 					out := g.out(DRAW_DENY, g.playerIDs[index])
 					out.Player = g.playerType(out.PlayerID)
-                    g.sendBoth(out)
+					g.sendBoth(out)
 					g.pendingDraw = -1
 				}
 			}
