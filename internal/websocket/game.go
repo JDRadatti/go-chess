@@ -150,6 +150,21 @@ func (g *Game) out(action string, pid PlayerID) *Outbound {
 	}
 }
 
+func (g *Game) sendBoth(out *Outbound) {
+	if g.players[whiteIndex] != nil {
+		g.players[whiteIndex].send <- out
+	}
+	if g.players[blackIndex] != nil {
+		g.players[blackIndex].send <- out
+	}
+}
+
+func (g *Game) sendToOpponent(out *Outbound, index int) {
+	if g.players[(index+1)%2] != nil {
+		g.players[(index+1)%2].send <- out // send to other index
+	}
+}
+
 func (g *Game) play() {
 	ticker := time.NewTicker(time.Second)
 	defer func() {
@@ -165,8 +180,7 @@ func (g *Game) play() {
 			}
 			if g.bothPlayersConnected() {
 				startOut := g.out(GAME_START, "")
-				g.players[whiteIndex].send <- startOut
-				g.players[blackIndex].send <- startOut
+				g.sendBoth(startOut)
 				g.state = playing
 			}
 		case player := <-g.leave:
@@ -181,13 +195,11 @@ func (g *Game) play() {
 			currentI := g.currentPlayerIndex()
 			if g.timeRemaining[currentI] < 0 {
 				out := g.out(GAME_END, "")
-				g.players[whiteIndex].send <- out
-				g.players[blackIndex].send <- out
+				g.sendBoth(out)
 				return
 			}
 			out := g.out(TIME_UPDATE, "")
-			g.players[whiteIndex].send <- out
-			g.players[blackIndex].send <- out
+			g.sendBoth(out)
 			g.timeRemaining[currentI]--
 		case moveRequest := <-g.move:
 			if g.state != playing {
@@ -203,15 +215,14 @@ func (g *Game) play() {
 			if valid {
 				out := g.out(MOVE_SUCCESS, player.id)
 				out.Move = move
-				g.players[whiteIndex].send <- out
-				g.players[blackIndex].send <- out
+				g.sendBoth(out)
 				g.pendingDraw = -1
 			}
 
-			if _, over := g.board.GameOver(); over {
+			if status, over := g.board.GameOver(); over {
 				out := g.out(GAME_END, player.id)
-				g.players[whiteIndex].send <- out
-				g.players[blackIndex].send <- out
+				out.Move = status
+				g.sendBoth(out)
 				return
 			}
 
@@ -219,8 +230,7 @@ func (g *Game) play() {
 		case resignRequest := <-g.resign:
 			if index, ok := g.playerIndex(resignRequest.PlayerID); ok {
 				out := g.out(RESIGN, g.playerIDs[index])
-				g.players[whiteIndex].send <- out
-				g.players[blackIndex].send <- out
+				g.sendBoth(out)
 				return
 			}
 		case abortRequest := <-g.abort:
@@ -229,25 +239,23 @@ func (g *Game) play() {
 					continue
 				}
 				out := g.out(ABORT, g.playerIDs[index])
-				g.players[whiteIndex].send <- out
-				g.players[blackIndex].send <- out
+				g.sendBoth(out)
 				return
 			}
 		case drawRequest := <-g.draw:
 			if index, ok := g.playerIndex(drawRequest.PlayerID); ok {
 				if g.pendingDraw == -1 && drawRequest.Action == DRAW_REQUEST {
 					out := g.out(DRAW_REQUEST, g.playerIDs[index])
-					g.players[(index+1)%2].send <- out // send to other index
+					g.sendToOpponent(out, index)
 					g.pendingDraw = index
 				} else if g.pendingDraw == (index+1)%2 && drawRequest.Action == DRAW_ACCEPT {
 					out := g.out(DRAW, g.playerIDs[index])
-					g.players[whiteIndex].send <- out
-					g.players[blackIndex].send <- out
+                    g.sendBoth(out)
 					return
 				} else if drawRequest.Action == DRAW_DENY {
 					out := g.out(DRAW_DENY, g.playerIDs[index])
-					g.players[whiteIndex].send <- out
-					g.players[blackIndex].send <- out
+					out.Player = g.playerType(out.PlayerID)
+                    g.sendBoth(out)
 					g.pendingDraw = -1
 				}
 			}

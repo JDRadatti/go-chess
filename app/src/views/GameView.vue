@@ -13,6 +13,7 @@ var whiteTime = ref(0)
 var blackTime = ref(0)
 var increment = ref(0)
 const gameID = ref("")
+const status = ref("")
 const started = ref(false)
 const waiting = ref(false)
 const move = ref("")
@@ -43,6 +44,7 @@ onMounted(() => {
             } else if (parsed.Action == "game_start") {
                 started.value = true
                 waiting.value = false
+                move.value = parsed.Move
                 fen.value = parsed.FEN
             } else if (parsed.Action == "move_success") {
                 move.value = parsed.Move
@@ -55,8 +57,26 @@ onMounted(() => {
                 router.push('/play')
             } else if (parsed.Action == "game_end") {
                 gameOver.value = true
+                if (whiteTime.value == 0 || blackTime == 0) {
+                    status.value = "on time"
+                } else {
+                    status.value = parsed.Move
+                }
                 fen.value = parsed.FEN
                 move.value = parsed.Move
+            } else if (parsed.Action == "draw_request") {
+                status.value = "draw_request"
+            } else if (parsed.Action == "draw_deny") {
+                status.value = "draw_deny" + parsed.Player
+            } else if (parsed.Action == "draw") {
+                status.value = "draw"
+                gameOver.value = true
+            } else if (parsed.Action == "abort") {
+                status.value = "aborted"
+                gameOver.value = true
+            } else if (parsed.Action == "resign") {
+                status.value = "resigned"
+                gameOver.value = true
             } else if (parsed.Action == "time_update") {
                 whiteTime.value = parsed.WhiteTime
                 blackTime.value = parsed.BlackTime
@@ -76,11 +96,11 @@ onMounted(() => {
 
 <template>
     <main class="game-container">
-        <GameBoard :start="started" :color="color" :waiting="waiting" :fen="fen" :count="messageCount"
-            :over="gameOver" />
+        <GameBoard :start="started" :color="color" :waiting="waiting" :fen="fen" :count="messageCount" :over="gameOver"
+            :status="status" />
         <div>
             <GameSide :start="started" :whiteTurn="whiteTurn" :blackTime="blackTime" :whiteTime="whiteTime"
-                :color="color" :over="gameOver" />
+                :color="color" :over="gameOver" :status="status" :move="move" />
         </div>
     </main>
 </template>

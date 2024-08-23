@@ -1,12 +1,17 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { sendMove } from '../scripts/websocket.js'
+import { useRouter } from 'vue-router'
+import { sendMove, acceptDraw, denyDraw } from '../scripts/websocket.js'
 import { VueSpinnerBox } from 'vue3-spinners';
 
-const props = defineProps(['start', 'color', 'waiting', 'fen', 'count', 'over'])
+const props = defineProps(['start', 'color', 'waiting', 'fen', 'count', 'over', 'status'])
 
+const router = useRouter()
+const gameOver = ref(false)
+const drawRequested = ref(false)
 const waiting = ref(false)
 const dragPiece = ref(null);
+const draggable = ref(false);
 const dragImage = ref(null)
 const boardRef = ref(null);
 const pieceClassList = ref([
@@ -131,6 +136,14 @@ function hideAllPieces() {
     }
 }
 
+function disableAllPieces() {
+    draggable.value = false
+}
+
+function enableAllPieces() {
+    draggable.value = true
+}
+
 function updatePieceType(pieceID, pieceIcon) {
     pieceClassList.value[pieceID][pieceTypeIndex] = PieceToType[pieceIcon]
 }
@@ -234,6 +247,13 @@ function captureHandler(ev) {
     dragged = null
 }
 
+function newGame() {
+    router.push('/play')
+}
+
+function rematch() {
+}
+
 onMounted(() => {
     const squareElements = document.querySelectorAll('.square')
     var rank = 0
@@ -258,6 +278,7 @@ watch(props, (props) => {
 
     if (props.start && waiting.value == true) {
         showAllPieces()
+        enableAllPieces()
         waiting.value = false // stop spinner
     }
 
@@ -266,8 +287,19 @@ watch(props, (props) => {
     }
 
     if (props.over) {
-        alert("game over")
+        gameOver.value = true
+        drawRequested.value = false
+        disableAllPieces()
     }
+
+    if (props.status == "draw_deny0" || props.status == "draw_deny1") {
+        drawRequested.value = false
+        enableAllPieces()
+    } else if (props.status == "draw_request") {
+        drawRequested.value = true
+        disableAllPieces()
+    }
+
 })
 </script>
 
@@ -275,24 +307,58 @@ watch(props, (props) => {
     <div inert class="drag unselectable hide" draggable="false" ref="dragPiece"></div>
     <div class="hide" ref="dragImage" alt=" "></div>
     <div class="board-container" @dragover="dragoverHandler($event)" @dragenter.prevent @dragover.prevent>
-        <div class="spinner-container" v-if="waiting">
+        <div class="card-container" v-if="waiting">
             <VueSpinnerBox size="100" color="rgba(132, 118, 186, 1)" />
             <p> Waiting for Opponenet... </p>
+        </div>
+        <div class="card-container" v-if="gameOver">
+            <p class="heading"> Game Over </p>
+            <p class="subtext"> {{ status }} </p>
+            <div class="card-buttons">
+                <button data-type="secondary" @click="newGame">New Game</button>
+                <button data-type="primary" @click="rematch">Rematch</button>
+            </div>
+        </div>
+        <div class="card-container" v-if="drawRequested">
+            <p class="heading"> Opponent offered a draw.</p>
+            <div class="card-buttons">
+                <button data-type="secondary" @click="acceptDraw">Accept</button>
+                <button data-type="primary" @click="denyDraw">Deny</button>
+            </div>
         </div>
         <div class="board" draggable="false">
             <div class="square unselectable" v-for="n in 64" draggable="false" @dragenter="dragenterHandler($event)"
                 @dragleave="dragleaveHandler($event)" @drop="dropHandler($event, n)" @dragover.prevent>
             </div>
         </div>
-        <div v-for="(classList, index) in pieceClassList" :class="classList" :key="index" :id="index" draggable="true"
-            @dragstart="dragstartHandler($event)" @dragend="dragendHandler($event)" @drop="captureHandler($event)"
-            @dragover.prevent @dragenter.prevent>
+        <div v-for="(classList, index) in pieceClassList" :class="classList" :key="index" :id="index"
+            :draggable="draggable" @dragstart="dragstartHandler($event)" @dragend="dragendHandler($event)"
+            @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
         </div>
     </div>
 </template>
 
 <style scoped>
-.spinner-container {
+.heading {
+    color: var(--light-square);
+    font-size: 1.3rem;
+    padding-top: 0.5rem;
+}
+
+.subtext {
+    color: var(--dark-square);
+}
+
+.card-buttons {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 0rem;
+    width: 100%;
+}
+
+.card-container {
+    text-align: center;
+    z-index: 100;
     display: flex;
     justify-content: center;
     align-items: center;
