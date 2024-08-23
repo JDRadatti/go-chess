@@ -53,6 +53,10 @@ function hideButtons() {
     resignClassList.value[1] = "hide"
 }
 
+function hideAbort() {
+    abortClassList.value[1] = "hide"
+}
+
 function drawRequest() {
     drawStatus.value = "Waiting..."
     sendDrawRequest()
@@ -88,6 +92,7 @@ watch(props, (props) => {
         drawStatus.value = "Draw Denied"
     }
     if (props.move != lastMove.value) {
+        hideAbort()
         lastMove.value = props.move
         addMove()
     }
@@ -101,7 +106,7 @@ watch(props, (props) => {
                 <p>{{ blackTimeFormatted }}</p>
             </div>
             <div class="moves-container">
-                {{moves}}
+                {{ moves }}
             </div>
             <CopyLink :show="start"></CopyLink>
             <div class="buttons-container">
