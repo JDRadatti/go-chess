@@ -58,10 +58,8 @@ onMounted(() => {
                 gameOver.value = true
                 if (whiteTime.value == 0 || blackTime == 0) {
                     status.value = "on time"
-                } else if (parsed.Move[paresed.Move.length - 1] == "#") {
-                    status.value = "checkmate"
                 } else {
-                    status.value = "stalemate"
+                    status.value = parsed.Move
                 }
                 fen.value = parsed.FEN
                 move.value = parsed.Move
