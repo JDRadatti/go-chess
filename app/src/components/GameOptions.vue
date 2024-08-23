@@ -29,7 +29,7 @@ function incClick(event, index) {
 
 onMounted(() => {
     for (let i = 0; i < times.value.length; i++) {
-        if (times.value[i] * 60 == time.value) { // convert to minutes
+        if (times.value[i] == time.value) { // convert to minutes
             timeRefs.value[i].classList.add("active");
             activeTime.value = timeRefs.value[i];
         }
