@@ -44,6 +44,7 @@ onMounted(() => {
             } else if (parsed.Action == "game_start") {
                 started.value = true
                 waiting.value = false
+                move.value = parsed.Move
                 fen.value = parsed.FEN
             } else if (parsed.Action == "move_success") {
                 move.value = parsed.Move
@@ -99,7 +100,7 @@ onMounted(() => {
             :status="status" />
         <div>
             <GameSide :start="started" :whiteTurn="whiteTurn" :blackTime="blackTime" :whiteTime="whiteTime"
-                :color="color" :over="gameOver" :status="status" />
+                :color="color" :over="gameOver" :status="status" :move="move" />
         </div>
     </main>
 </template>

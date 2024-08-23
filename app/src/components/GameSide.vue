@@ -4,7 +4,10 @@ import CopyLink from '../components/CopyLink.vue'
 import { sendAbort, sendResign, acceptDraw, denyDraw, sendDrawRequest } from '../scripts/websocket.js'
 
 // time and increment should be in seconds
-const props = defineProps(['whiteTurn', 'whiteTime', 'blackTime', 'increment', 'start', 'color', 'over', 'status'])
+const props = defineProps(['whiteTurn', 'whiteTime', 'blackTime', 'increment', 'start', 'color', 'over', 'status', 'move'])
+
+const lastMove = ref("")
+const moves = ref([])
 
 const started = ref(false)
 const gameOver = ref(false)
@@ -55,6 +58,10 @@ function drawRequest() {
     sendDrawRequest()
 }
 
+function addMove() {
+    moves.value.push(lastMove.value)
+}
+
 watch(started, () => {
     if (props.color == 1) {
         flip()
@@ -80,6 +87,10 @@ watch(props, (props) => {
     } else if (props.status == "draw_deny0" && props.color == 1) {
         drawStatus.value = "Draw Denied"
     }
+    if (props.move != lastMove.value) {
+        lastMove.value = props.move
+        addMove()
+    }
 })
 </script>
 
@@ -88,6 +99,9 @@ watch(props, (props) => {
         <div :class="clocksClassList">
             <div :class="clockBlackList">
                 <p>{{ blackTimeFormatted }}</p>
+            </div>
+            <div class="moves-container">
+                {{moves}}
             </div>
             <CopyLink :show="start"></CopyLink>
             <div class="buttons-container">
