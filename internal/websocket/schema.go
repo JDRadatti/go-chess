@@ -27,6 +27,7 @@ const ( // outgoing status
 	RESIGN_SUCCESS = "resign_success"
 	DRAW_SUCCESS   = "draw_success"
 	TIME_UPDATE    = "time_update"
+	GAME_KILL      = "game_kill"
 )
 
 type Inbound struct {
