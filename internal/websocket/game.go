@@ -208,8 +208,9 @@ func (g *Game) play() {
 				g.pendingDraw = -1
 			}
 
-			if _, over := g.board.GameOver(); over {
+			if status, over := g.board.GameOver(); over {
 				out := g.out(GAME_END, player.id)
+				out.Move = status
 				g.players[whiteIndex].send <- out
 				g.players[blackIndex].send <- out
 				return
