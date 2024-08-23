@@ -1,8 +1,6 @@
 package websocket
 
 import (
-	"errors"
-	"fmt"
 	"github.com/JDRadatti/reptile/internal/chess"
 	"github.com/google/uuid"
 	"log"
@@ -10,171 +8,206 @@ import (
 	"time"
 )
 
-type State int8
+var (
+	validTimes      = []int{60, 180, 300, 600}
+	validIncrements = []int{0, 1, 2, 10}
+)
 
-var validTimes []int = []int{60, 180, 300, 600}
-var validIncrements []int = []int{0, 1, 2, 10}
+const (
+	defaultTime      = 300
+	defaultIncrement = 0
+	whiteIndex       = 0
+	blackIndex       = 1
+)
+
+type GameState int8
+
+const (
+	waiting GameState = iota
+	playing
+	over
+)
+
+type GameID string
 
 type Game struct {
-	ID        string
-	White     *Player
-	Black     *Player
-	Moves     chan *Inbound // Moves requests sent from both white and black
-	Board     *chess.Board
-	Start     chan struct{}
-	WhiteTime int // number of seconds in the game for white
-	BlackTime int
-	Increment int // number of seconds to add when player moves
-	Lobby     *Lobby
+	id            GameID
+	players       [2]*Player
+	playerIDs     [2]PlayerID
+	timeRemaining [2]int
+	increment     int // number of seconds to add when player moves
+	join          chan *Player
+	leave         chan *Player
+	move          chan *Inbound // Moves requests sent from both white and black
+	board         *chess.Board
+	lobby         *Lobby
+	state         GameState
 }
 
-func newGame(l *Lobby, time int, increment int) *Game {
-
-	gameID, err := uuid.NewRandom()
-	if err != nil {
-		panic(err)
-	}
+func NewGame(l *Lobby, time int, increment int) *Game {
 
 	if !slices.Contains(validTimes, time) {
-		time = 180
+		time = defaultTime
 	}
 
 	if !slices.Contains(validIncrements, increment) {
-		increment = 0
+		increment = defaultIncrement
 	}
 
 	board := chess.NewBoardClassic()
 	newGame := &Game{
-		ID:        gameID.String()[:8],
-		Moves:     make(chan *Inbound),
-		Start:     make(chan struct{}),
-		Board:     &board,
-		WhiteTime: time,
-		BlackTime: time,
-		Increment: increment,
-		Lobby:     l,
+		id:            generateGameID(),
+		move:          make(chan *Inbound),
+		join:          make(chan *Player),
+		leave:         make(chan *Player),
+		board:         &board,
+		timeRemaining: [2]int{time, time},
+		players:       [2]*Player{},
+		playerIDs:     [2]PlayerID{},
+		increment:     increment,
+		lobby:         l,
+		state:         waiting,
 	}
 	go newGame.play()
 	return newGame
 }
 
-func (g *Game) addPlayer(p *Player) error {
-	if g.White == nil {
-		g.White = p
-	} else if g.Black == nil {
-		g.Black = p
+func generateGameID() GameID {
+	uuid, err := uuid.NewRandom()
+	if err != nil {
+		log.Printf("error %s", err)
+	}
+	return GameID(uuid.String()[:8])
+}
+
+func (g *Game) clean() {
+	g.lobby.Clean(g.id, g.playerIDs[whiteIndex], g.playerIDs[blackIndex])
+}
+
+func (g *Game) playerFromID(playerID PlayerID) (*Player, int, bool) {
+	if g.playerIDs[whiteIndex] == playerID {
+		return g.players[whiteIndex], whiteIndex, true
+	} else if g.playerIDs[blackIndex] == playerID {
+		return g.players[blackIndex], blackIndex, true
 	} else {
-		return errors.New("game full")
+		return nil, -1, false
 	}
-	if g.White != nil && g.Black != nil {
-		close(g.Start) // Tell game to start
-	}
-	p.Game = g
-	return nil
 }
 
-func (g *Game) ColorFromPID(pid string) chess.Player {
-	if g.White != nil && g.White.ID == pid {
-		return chess.WHITE
-	} else if g.Black != nil && g.Black.ID == pid {
-		return chess.BLACK
+func (g *Game) playerType(playerID PlayerID) chess.Player {
+	index, _ := g.playerIndex(playerID)
+	return chess.Player(index)
+}
+
+func (g *Game) playerIndex(playerID PlayerID) (int, bool) {
+	if g.playerIDs[whiteIndex] == playerID {
+		return whiteIndex, true
+	} else if g.playerIDs[blackIndex] == playerID {
+		return blackIndex, true
 	} else {
-		log.Printf("Player ID not found %s", pid)
-		return chess.INVALID_PLAYER
+		return -1, false
 	}
 }
 
-func (g *Game) ValidPID(pid string) bool {
-	return (pid == g.White.ID || pid == g.Black.ID) && g.ColorFromPID(pid) == g.Board.Turn()
+func (g *Game) addPlayerID(playerID PlayerID) (int, bool) {
+	if g.playerIDs[whiteIndex] == "" {
+		g.playerIDs[whiteIndex] = playerID
+		return whiteIndex, true
+	} else if g.playerIDs[blackIndex] == "" {
+		g.playerIDs[blackIndex] = playerID
+		return blackIndex, true
+	} else {
+		return -1, false
+	}
 }
 
-func (g *Game) String() string {
-	return fmt.Sprintf("white: %s, black %s \n moves: %v",
-		g.White.ID, g.Black.ID)
+func (g *Game) currentPlayerIndex() int {
+	return int(g.board.Turn())
 }
 
-func (g *Game) Out(action Action, move string, pid string, message string) *Outbound {
+func (g *Game) bothPlayersConnected() bool {
+	return g.players[whiteIndex] != nil && g.players[blackIndex] != nil
+}
+
+func (g *Game) out(action string, pid PlayerID) *Outbound {
 	return &Outbound{
 		Action:    action,
-		Move:      move,
+		Move:      g.board.LastMove(),
 		PlayerID:  pid, // Player who made the move
-		GameID:    g.ID,
-		FEN:       string(g.Board.FEN()),
-		Message:   message,
-		Turn:      g.Board.Turn(),
-		WhiteTime: g.WhiteTime,
-		BlackTime: g.BlackTime,
+		GameID:    g.id,
+		FEN:       string(g.board.FEN()),
+		Turn:      g.board.Turn(),
+		WhiteTime: g.timeRemaining[whiteIndex],
+		BlackTime: g.timeRemaining[blackIndex],
 	}
 }
 
 func (g *Game) play() {
-	<-g.Start // Wait for game to start
-
 	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	defer func() {
+		ticker.Stop()
+		g.clean()
+	}()
 
 	for {
 		select {
+		case player := <-g.join:
+			if index, ok := g.playerIndex(player.id); ok {
+				g.players[index] = player
+			}
+			if g.bothPlayersConnected() {
+				startOut := g.out(GAME_START, "")
+				g.players[whiteIndex].send <- startOut
+				g.players[blackIndex].send <- startOut
+				g.state = playing
+			}
+		case player := <-g.leave:
+			if index, ok := g.playerIndex(player.id); ok {
+				g.players[index] = nil
+				close(player.send)
+			}
 		case <-ticker.C:
-			if g.Board.Turn() == chess.WHITE && g.WhiteTime < 0 ||
-				g.Board.Turn() == chess.BLACK && g.BlackTime < 0 {
-				// game over
-				out := g.Out(GAME_OVER, "", "", "on time")
-				g.Lobby.Clean(g.ID, g.White.ID, g.Black.ID)
-				g.White.Move <- out
-				g.Black.Move <- out
+			if g.state != playing {
+				continue
+			}
+			currentI := g.currentPlayerIndex()
+			if g.timeRemaining[currentI] < 0 {
+				out := g.out(GAME_END, "")
+				g.players[whiteIndex].send <- out
+				g.players[blackIndex].send <- out
 				return
-			} else {
-				out := g.Out(TIME_UPDATE, "", "", "")
-				g.White.Move <- out
-				g.Black.Move <- out
 			}
-			if g.Board.Turn() == chess.WHITE {
-				g.WhiteTime -= 1
-			} else {
-				g.BlackTime -= 1
-			}
-		case moveRequest := <-g.Moves:
-
-			pid := moveRequest.PlayerID
-			if !g.ValidPID(pid) {
-				out := g.Out(INVALID_MOVE, "", pid, "")
-				if pid == g.White.ID {
-					g.White.Move <- out
-				} else {
-					g.Black.Move <- out
-				}
-			} else {
-
-				// try move
-				move, valid := g.Board.Move(moveRequest.Move)
-				if valid {
-					var out *Outbound
-					if status, over := g.Board.GameOver(); over {
-						out = g.Out(GAME_OVER, move, pid, status)
-						g.Lobby.Clean(g.ID, g.White.ID, g.Black.ID)
-					} else {
-						if g.Board.Turn() == chess.WHITE {
-							g.BlackTime += g.Increment
-						} else {
-							g.WhiteTime += g.Increment
-						}
-						out = g.Out(MOVE, move, pid, "")
-					}
-					g.White.Move <- out
-					g.Black.Move <- out
-				} else {
-					out := g.Out(INVALID_MOVE, "", pid, "")
-					if pid == g.White.ID {
-						g.White.Move <- out
-					} else {
-						g.Black.Move <- out
-					}
-				}
+			out := g.out(TIME_UPDATE, "")
+			g.players[whiteIndex].send <- out
+			g.players[blackIndex].send <- out
+			g.timeRemaining[currentI]--
+		case moveRequest := <-g.move:
+			if g.state != playing {
+				continue
 			}
 
-		default:
-			continue
+			player, index, ok := g.playerFromID(moveRequest.PlayerID)
+			if !ok || index != g.currentPlayerIndex() {
+				continue
+			}
+
+			move, valid := g.board.Move(moveRequest.Move)
+			if valid {
+				out := g.out(MOVE_SUCCESS, player.id)
+				out.Move = move
+				g.players[whiteIndex].send <- out
+				g.players[blackIndex].send <- out
+			}
+
+			if _, over := g.board.GameOver(); over {
+				out := g.out(GAME_END, player.id)
+				g.players[whiteIndex].send <- out
+				g.players[blackIndex].send <- out
+                return
+			}
+
+			g.timeRemaining[index] += g.increment
+
 		}
 	}
 }

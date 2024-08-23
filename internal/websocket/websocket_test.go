@@ -2,121 +2,205 @@ package websocket
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"strings"
-	"sync"
 	"testing"
+
+	"github.com/JDRadatti/reptile/internal/chess"
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
+	"github.com/stretchr/testify/assert"
 )
 
+// there can be x number of players. x should be the length of all
+// slices
 type testCase struct {
-	name      string
-	playerIDs []string
-	moves     []string
+	name       string
+	time       int
+	inc        int
+	gameID     string
+	createGame bool
+	playerID   []PlayerID
+	join       []bool // join[i] true if player i should join before handshake
+	inbounds   [][]*Inbound
+	outbounds  [][]Outbound // "*" as outbound.playerID means any valid uuid
 }
 
-// Test two players joining
-// Test four players joining
-// Test one player joinging and timeout
-// Test invalid player id joining
-// Test valid player id joinikng with incorrect game id
-// TestGames: input is a list of a bunch of games, weach witgh a playerIDs, gameID, and moves
-// Test multiple games running at once
-// TestLobby assumes the player already has a client ID recieved from
+// valid handshakes:
+// gameID in lobby, no playerID but game not full
+// gameID in lobby, playerID in game
+// gameID in lobby, invalid playerID but game not full
+//
+// invalid handshakes:
+// no handshake message
+// invalid handshake message
+// gameID not in lobby/invalid
+// gameID in lobby but game is over
+// gameID in lobby but invalid/not found playerID
+func TestHandshake(t *testing.T) {
+	board := chess.NewBoardClassic()
+	startingFEN := board.FEN()
+	time := 180
+	increment := 0
+	players := 3
+	playerIDs := make([]PlayerID, players)
+	joins := make([]*Inbound, players)
+	success := make([]Outbound, players)
+	fail := make([]Outbound, players)
+	player := []chess.Player{chess.WHITE, chess.BLACK, chess.INVALID_PLAYER}
+	for i := range players {
+		playerID := GeneratePlayerID()
+		j := &Inbound{
+			Action:   JOIN,
+			PlayerID: playerID,
+		}
+		s := Outbound{
+			Action:    JOIN_SUCCESS,
+			FEN:       string(startingFEN),
+			WhiteTime: time,
+			BlackTime: time,
+			Increment: increment,
+			PlayerID:  playerID,
+			GameID:    "0",
+			Player:    player[i],
+		}
+		f := Outbound{
+			Action: JOIN_FAIL,
+		}
+		playerIDs[i] = playerID
+		joins[i] = j
+		success[i] = s
+		fail[i] = f
+	}
 
-// Test invalid handshake (no join message)
-// Test not sending the handshake (timeout?)
-// How to know when both players are connected
-// the /token endpoint (simulated with playerIDs)
-func TestLobby(t *testing.T) {
 	inputs := []testCase{
 		{
-			name:      "two player basic game with one move each",
-			playerIDs: []string{"0", "1"},
-			moves:     []string{"d4", "e4"},
+			name:       "both players already in game. valid join request.",
+			gameID:     "0",
+			createGame: true,
+			playerID:   []PlayerID{playerIDs[0], playerIDs[1]},
+			join:       []bool{true, true},
+			time:       time,
+			inc:        increment,
+			inbounds: [][]*Inbound{
+				{joins[0]},
+				{joins[1]},
+			},
+			outbounds: [][]Outbound{
+				{success[0]},
+				{success[1]},
+			},
+		},
+		{
+			name:       "one player not already in game. valid join request. random id.",
+			gameID:     "0",
+			createGame: true,
+			playerID:   []PlayerID{playerIDs[0], playerIDs[1]},
+			join:       []bool{true, false},
+			time:       time,
+			inc:        increment,
+			inbounds: [][]*Inbound{
+				{joins[0]},
+				{joins[1]},
+			},
+			outbounds: [][]Outbound{
+				{success[0]},
+				{success[1]},
+			},
+		},
+		{
+			name:       "two valid join requests and a third fail when joining same gameID.",
+			gameID:     "0",
+			createGame: true,
+			playerID:   []PlayerID{playerIDs[0], playerIDs[1], playerIDs[2]},
+			join:       []bool{true, false, false},
+			time:       time,
+			inc:        increment,
+			inbounds: [][]*Inbound{
+				{joins[0]},
+				{joins[1]},
+				{joins[2]},
+			},
+			outbounds: [][]Outbound{
+				{success[0]},
+				{success[1]},
+				{fail[2]},
+			},
+		},
+		{
+			name:       "all players join non-existing game",
+			gameID:     "0",
+			createGame: false,
+			playerID:   []PlayerID{playerIDs[0], playerIDs[1], playerIDs[2]},
+			join:       []bool{false, false, false},
+			time:       time,
+			inc:        increment,
+			inbounds: [][]*Inbound{
+				{joins[0]},
+				{joins[1]},
+				{joins[2]},
+			},
+			outbounds: [][]Outbound{
+				{fail[0]},
+				{fail[1]},
+				{fail[2]},
+			},
 		},
 	}
 
 	for _, tt := range inputs {
+		l := NewLobby()
+		var game *Game
+		if tt.createGame {
+			game = NewGame(l, tt.time, tt.inc)
+			game.id = GameID(tt.gameID)
+		}
+
 		t.Run(tt.name, func(t *testing.T) {
-			l := NewLobby()
-			go l.Run()
-
-			var wg sync.WaitGroup
-			for _, playerID := range tt.playerIDs {
-				// simulate play requests to lobby
-				player := l.GetOrCreatePlayer(playerID)
-				l.PlayerPool <- player
-				<-player.InGame // wait for match making.
-
-				p, ok := l.Players[playerID]
-				assert.Equal(t, ok, true)
-				assert.Equal(t, p.ID, playerID)
-
-                // create connection
+			for i := range tt.inbounds {
+				// create connection
 				wsHandler := &WSHandler{
 					Lobby:  l,
-					GameID: p.Game.ID,
+					GameID: GameID(tt.gameID),
 				}
 				s, conn := newWSServer(t, wsHandler)
-				defer conn.Close()
-				defer s.Close()
 
-                // simulate game
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					runGame(t, conn, player, tt)
-				}()
+				if game != nil && tt.join[i] {
+					l.Join(tt.playerID[i], game)
+					game.addPlayerID(tt.playerID[i])
+				}
+				for j, inbound := range tt.inbounds[i] {
+					sendMessage(t, conn, inbound)
+					joinSuccess := receiveWSMessage(t, conn)
+
+					// if playerID = *, set PlayerID to the one returned by
+					// server. the server will send the client a new uuid if
+					// 1. the given uuid is not in a different game
+					// 2. the given game is not full
+					if tt.outbounds[i][j].PlayerID == "*" {
+						tt.outbounds[i][j].PlayerID = joinSuccess.PlayerID
+						if err := uuid.Validate(string(tt.outbounds[i][j].PlayerID)); err != nil {
+							assert.Fail(t, "server sent invalid playerID")
+						}
+					}
+					assert.Equal(t, tt.outbounds[i][j], joinSuccess)
+					conn.Close()
+					s.Close()
+				}
 
 			}
-			wg.Wait()
+
+			// Clean and test Clean worked
+			for i := range tt.inbounds {
+				l.Clean(GameID(tt.gameID), PlayerID(tt.playerID[i]), "")
+				_, ok := l.Players[PlayerID(tt.playerID[i])]
+				assert.Equal(t, false, ok)
+				_, ok = l.Games[GameID(tt.gameID)]
+				assert.Equal(t, false, ok)
+			}
 		})
 	}
-}
-
-func runGame(t *testing.T, conn *websocket.Conn, player *Player, tt testCase) {
-	t.Helper()
-
-	joinRequest := Inbound{
-		Action:   JOIN,
-		PlayerID: player.ID,
-	}
-	sendMessage(t, conn, joinRequest)
-	joinSuccess := receiveWSMessage(t, conn)
-	assert.Equal(t, string(joinSuccess.Action), JOIN_SUCCESS)
-
-	color := player.Game.ColorFromPID(player.ID)
-
-	for i := 0; i < len(tt.moves); i++ { // simulate game
-		// Send message when it's player's move
-		expectedPlayerID := i % 2
-		if expectedPlayerID == color {
-			moveRequest := Inbound{
-				Action:   MOVE,
-				Move:     tt.moves[i],
-				PlayerID: player.ID,
-				GameID:   player.Game.ID,
-			}
-			sendMessage(t, conn, moveRequest)
-		}
-		// receive
-		// Should recieve a move confirmation if player sends a move
-		// or if opponent sends a move
-		expectedOut := Outbound{
-			Action:   MOVE,
-			Move:     tt.moves[i],
-			GameID:   player.Game.ID,
-			PlayerID: strconv.Itoa(expectedPlayerID),
-		}
-		actualOut := receiveWSMessage(t, conn)
-		assert.Equal(t, expectedOut, actualOut)
-	}
-
-	assert.Equal(t, tt.moves, player.Game.AllMoves)
 }
 
 func newWSServer(t *testing.T, h http.Handler) (*httptest.Server, *websocket.Conn) {
@@ -144,7 +228,7 @@ func httpToWs(t *testing.T, url string) string {
 	return url
 }
 
-func sendMessage(t *testing.T, conn *websocket.Conn, msg Inbound) {
+func sendMessage(t *testing.T, conn *websocket.Conn, msg *Inbound) {
 	t.Helper()
 
 	m, err := json.Marshal(msg)

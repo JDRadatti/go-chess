@@ -1,86 +1,78 @@
 package websocket
 
 import (
-	"encoding/json"
-	"github.com/JDRadatti/reptile/internal/chess"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"log"
+	"time"
 )
-
-type Player struct {
-	ID        string
-	Game      *Game
-	Lobby     *Lobby
-	Conn      *websocket.Conn
-	Move      chan *Outbound
-	InGame    chan struct{}
-	Time      int
-	Increment int
-}
 
 var (
-	messageType        = websocket.TextMessage
-	matchMakingMaxWait = 60 // seconds
+	messageType              = websocket.TextMessage
+	matchmakingMaxWait       = 180 // seconds
+	writeWait                = 10 * time.Second
+	pongWait                 = 60 * time.Second
+	pingPeriod               = (pongWait * 9) / 10
+	maxMessageSize     int64 = 512
 )
 
-func NewPlayer(l *Lobby, conn *websocket.Conn, time int, increment int) *Player {
+type PlayerID string
+
+func (pid PlayerID) validate() bool {
+	if err := uuid.Validate(string(pid)); err != nil {
+		return true
+	}
+	return false
+}
+
+type Player struct {
+	id    PlayerID
+	game  *Game
+	lobby *Lobby
+	conn  *websocket.Conn
+	send  chan *Outbound
+}
+
+func NewPlayer(l *Lobby, c *websocket.Conn, g *Game) *Player {
 	return &Player{
-		Lobby:     l,
-		Conn:      conn,
-		Move:      make(chan *Outbound),
-		InGame:    make(chan struct{}),
-		Time:      time,
-		Increment: increment,
+		lobby: l,
+		conn:  c,
+		game:  g,
+		send:  make(chan *Outbound),
 	}
 }
 
-func GenerateID() string {
+func GeneratePlayerID() PlayerID {
 	uuid, err := uuid.NewRandom()
 	if err != nil {
 		log.Printf("error %s", err)
 	}
-	return uuid.String()
+	return PlayerID(uuid.String())
 }
 
 // write message from the Game to the websocket
 // All writes to websocket MUST be in this function to avoid
 // concurrent write errors
 func (p *Player) write() {
-	<-p.Game.Start // wait for game to start
-	var fen string
-	var turn chess.Player
-	if p.Game.Board != nil {
-		fen = string(p.Game.Board.FEN())
-		turn = p.Game.Board.Turn()
-	} else {
-		fen = "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr"
-	}
-	message, err := json.Marshal(&Outbound{
-		Action: GAME_START,
-		GameID: p.Game.ID,
-		FEN:    fen,
-		Turn:   turn,
-	})
-	if err != nil {
-		log.Printf("error: %v", err)
-		return
-	}
-	if err := p.Conn.WriteMessage(messageType, []byte(message)); err != nil {
-		log.Printf("error: %v", err)
-		return
-	}
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		p.conn.Close()
+	}()
 
 	for {
 		select {
-		case out := <-p.Move:
-			message, err := json.Marshal(out)
-			if err != nil {
-				log.Printf("error: %v", err)
-				return
+		case out := <-p.send:
+			p.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if message, ok := marshal(out); ok {
+				if err := p.conn.WriteMessage(messageType, message); err != nil {
+					log.Printf("error: %v", err)
+					return
+				}
 			}
-			if err := p.Conn.WriteMessage(messageType, []byte(message)); err != nil {
-				log.Printf("error: %v", err)
+		case <-ticker.C:
+			p.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := p.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
 		}
@@ -91,11 +83,21 @@ func (p *Player) write() {
 // All reads from websocket MUST be in this function to avoid
 // concurrent read errors
 func (p *Player) read() {
-	<-p.Game.Start // wait for game to start
-	// From now on, every move must contain a valid playerID
-	// Handle move requests
+	defer func() {
+		p.game.leave <- p
+		p.conn.Close()
+	}()
+
+	p.conn.SetReadLimit(maxMessageSize)
+	p.conn.SetReadDeadline(time.Now().Add(pongWait))
+	p.conn.SetPongHandler(func(string) error { p.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
 	for {
-		_, message, err := p.Conn.ReadMessage()
+		if p.game.state != playing {
+			continue
+		}
+
+		_, message, err := p.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
@@ -103,20 +105,12 @@ func (p *Player) read() {
 			break
 		}
 
-		in := &Inbound{}
-		err = json.Unmarshal(message, in)
-		if err != nil {
-			log.Printf("error: %v", err)
-		}
-		if p.ID != in.PlayerID {
-			log.Println("invalid player id", p.ID, in.PlayerID)
-			continue // Soft handle invalid ids
-		}
-		switch in.Action {
-		case MOVE:
-			p.Game.Moves <- in
-		default:
-			p.Conn.Close()
+		if in, ok := unmarshal(message); ok {
+			if p.id != in.PlayerID {
+				log.Println("invalid player id", p.id, in.PlayerID)
+				continue // Soft handle invalid ids
+			}
+			p.game.move <- in
 		}
 	}
 }

@@ -2,61 +2,36 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/JDRadatti/reptile/internal/chess"
 	"github.com/JDRadatti/reptile/internal/websocket"
 	"github.com/google/uuid"
 	"log"
 	"net/http"
 )
 
-// GameRequest is sent from the client when wanting to join a game
-type GameRequest struct {
-	PlayerID  string
-	Time      int
-	Increment int
-}
-
-// GameAccepted is sent from the client when wanting to join a game
-type GameAccepted struct {
-	PlayerID string
-	GameID   string
-	Color    chess.Player
-}
-
 // HandlePlay handles online game requests
 func HandlePlay(w http.ResponseWriter, r *http.Request, lobby *websocket.Lobby) {
-	var gameRequest *GameRequest = &GameRequest{}
+
+	gameRequest := &websocket.GameRequest{}
 	err := json.NewDecoder(r.Body).Decode(gameRequest)
 	if err != nil {
-		log.Println("err", err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	playerID := gameRequest.PlayerID
-	if err := uuid.Validate(playerID); err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
+	if err := uuid.Validate(string(gameRequest.PlayerID)); err != nil {
+		playerID = websocket.GeneratePlayerID()
+		gameRequest.PlayerID = playerID
 	}
 
-	player := lobby.GetOrCreatePlayer(playerID, gameRequest.Time, gameRequest.Increment)
-	lobby.PlayerPool <- player
-
-	<-player.InGame // wait for match making.
-	game := player.Game
-
-	payload := GameAccepted{
-		GameID:   game.ID,
-		PlayerID: player.ID,
-		Color:    game.ColorFromPID(player.ID),
-	}
-
-	marshled, err := json.Marshal(payload)
+	payload, err := json.Marshal(lobby.Match(gameRequest))
 	if err != nil {
 		log.Printf("error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	if _, err := w.Write(marshled); err != nil {
+	if _, err := w.Write(payload); err != nil {
 		log.Printf("error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

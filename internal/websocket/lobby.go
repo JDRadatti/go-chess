@@ -1,30 +1,29 @@
 package websocket
 
 import (
+	"github.com/JDRadatti/reptile/internal/chess"
 	"log"
 )
 
 var (
-	maxGames = 10
+	gameLimit = 10
 )
 
 type Lobby struct {
-	Games      map[string]*Game   // Current running games (has both players)
-	Players    map[string]*Player // Current Players in a game.
-	GamePool   chan *Game         // Current waiting games (only one player)
-	PlayerPool chan *Player       // Players who are waiting for a game [DEP]
+	Games    map[GameID]*Game   // Current running games (has both players)
+	Players  map[PlayerID]*Game // Current Players in a game.
+	GamePool chan *Game         // Current waiting games (only one player)
 }
 
 func NewLobby() *Lobby {
 	return &Lobby{
-		Games:      make(map[string]*Game),
-		Players:    make(map[string]*Player),
-		GamePool:   make(chan *Game, maxGames),
-		PlayerPool: make(chan *Player),
+		Games:    make(map[GameID]*Game),
+		Players:  make(map[PlayerID]*Game),
+		GamePool: make(chan *Game, gameLimit),
 	}
 }
 
-func (l *Lobby) Clean(gid string, pid1 string, pid2 string) {
+func (l *Lobby) Clean(gid GameID, pid1 PlayerID, pid2 PlayerID) {
 	if _, ok := l.Games[gid]; ok {
 		delete(l.Games, gid)
 	}
@@ -36,66 +35,70 @@ func (l *Lobby) Clean(gid string, pid1 string, pid2 string) {
 	}
 }
 
-func (l *Lobby) GetGame(id string) (*Game, bool) {
+func (l *Lobby) GetGameFromGameID(id GameID) (*Game, bool) {
 	game, ok := l.Games[id]
 	return game, ok
 }
 
-func (l *Lobby) GetPlayer(id string) (*Player, bool) {
+func (l *Lobby) GetGameFromPlayerID(id PlayerID) (*Game, bool) {
 	player, ok := l.Players[id]
 	return player, ok
 }
 
-func (l *Lobby) AddPlayer(player *Player) bool {
-	if _, ok := l.Players[player.ID]; ok {
+func (l *Lobby) Join(playerID PlayerID, game *Game) bool {
+	if game == nil {
 		return false
 	}
-	l.Players[player.ID] = player
+	if _, ok := l.Players[playerID]; ok {
+		return false
+	}
+	l.Players[playerID] = game
+
+	if _, ok := l.Games[game.id]; !ok {
+		l.Games[game.id] = game
+	}
 	return true
 }
 
-func (l *Lobby) GetOrCreatePlayer(playerID string, time int, increment int) *Player {
-	if player, ok := l.GetPlayer(playerID); ok {
-		log.Printf("player already in game %s", playerID)
-		return player
+func (l *Lobby) Success(pid PlayerID, gid GameID, i int) *GameResponse {
+	return &GameResponse{
+		PlayerID: pid,
+		GameID:   gid,
+		Player:   chess.Player(i),
 	}
-	player := NewPlayer(l, nil, time, increment)
-	player.ID = playerID // must be validated before this function
-	l.Players[playerID] = player
-	return player
 }
 
-func (l *Lobby) Run() {
-	for {
-		select {
-		case player := <-l.PlayerPool:
-			if player.Game != nil {
-				log.Printf("player %s already in game %s", player.ID, player.Game.ID)
-				continue
-			}
-			// TODO: handle different game options
-			var game *Game
-			select {
-			case g, ok := <-l.GamePool:
-				if ok {
-					game = g
-				} else {
-					panic("GamePool channel closed")
-				}
-			default:
-				game = newGame(l, player.Time, player.Increment)
-				l.GamePool <- game
-			}
+func (l *Lobby) Fail() *GameResponse {
+	return &GameResponse{
+		PlayerID: "",
+		GameID:   "",
+		Player:   -1,
+	}
+}
 
-			if err := game.addPlayer(player); err != nil {
-				log.Printf("error %v", err)
-				close(player.InGame)
-				continue
-			}
-
-			player.Game = game
-			l.Games[game.ID] = game
-			close(player.InGame)
+func (l *Lobby) Match(request *GameRequest) *GameResponse {
+	if game, ok := l.GetGameFromPlayerID(request.PlayerID); ok {
+		log.Printf("player %s already in game %s", request.PlayerID, game.id)
+		if index, ok := game.playerIndex(request.PlayerID); ok {
+			return l.Success(request.PlayerID, game.id, index)
+		} else {
+			return l.Fail()
 		}
+	}
+	// TODO: handle different game options
+	var game *Game
+	select {
+	case g := <-l.GamePool:
+		game = g
+	default:
+		game = NewGame(l, request.Time, request.Increment)
+		l.GamePool <- game
+	}
+
+	if index, ok := game.addPlayerID(request.PlayerID); ok {
+		l.Join(request.PlayerID, game)
+		return l.Success(request.PlayerID, game.id, index)
+	} else {
+		return l.Fail()
 	}
 }

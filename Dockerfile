@@ -5,7 +5,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 ADD cmd ./cmd
-ADD app ./app
+ADD app/dist ./app/dist
 ADD internal ./internal
 RUN CGO_ENABLED=0 GOOS=linux go build -o ./chess cmd/main.go
 EXPOSE 8080

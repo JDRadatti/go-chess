@@ -40,6 +40,7 @@ type Board struct {
 func NewBoardClassic() Board {
 	board := Board{
 		squares: InitSquaresClassic(),
+		moves:   []*Move{},
 	}
 
 	board.whiteKing = board.squares[60]
@@ -469,4 +470,11 @@ func (b *Board) String() string {
 
 func (b *Board) GameOver() (string, bool) {
 	return b.status, b.gameOver
+}
+
+func (b *Board) LastMove() string {
+	if len(b.moves) == 0 {
+		return ""
+	}
+	return b.moves[len(b.moves)-1].toAlgebraic(b)
 }
