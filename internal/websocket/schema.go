@@ -7,10 +7,14 @@ import (
 )
 
 const ( // incoming action
-	JOIN   = "join"
-	MOVE   = "move"
-	RESIGN = "resign"
-	DRAW   = "draw" // both players must send to accept draw
+	JOIN         = "join"
+	MOVE         = "move"
+	RESIGN       = "resign"
+	DRAW         = "draw" // both players must send to accept draw
+	DRAW_REQUEST = "draw_request"
+	DRAW_ACCEPT  = "draw_accept"
+	DRAW_DENY    = "draw_deny"
+	ABORT        = "abort"
 )
 
 const ( // outgoing status
@@ -26,7 +30,7 @@ const ( // outgoing status
 )
 
 type Inbound struct {
-	Action   string 
+	Action   string
 	Move     string
 	PlayerID PlayerID
 	GameID   GameID
