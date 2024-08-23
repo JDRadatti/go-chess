@@ -4,10 +4,11 @@ import CopyLink from '../components/CopyLink.vue'
 import { sendAbort, sendResign, acceptDraw, denyDraw, sendDrawRequest } from '../scripts/websocket.js'
 
 // time and increment should be in seconds
-const props = defineProps(['whiteTurn', 'whiteTime', 'blackTime', 'increment', 'start', 'color', 'over'])
+const props = defineProps(['whiteTurn', 'whiteTime', 'blackTime', 'increment', 'start', 'color', 'over', 'status'])
 
 const started = ref(false)
 const gameOver = ref(false)
+const drawStatus = ref("Request Draw")
 const abortClassList = ref(["abort", "hide"])
 const resignClassList = ref(["resign", "hide"])
 const drawClassList = ref(["draw", "hide"])
@@ -49,6 +50,10 @@ function hideButtons() {
     resignClassList.value[1] = "hide"
 }
 
+function drawRequest() {
+    drawStatus.value = "Waiting..."
+    sendDrawRequest()
+}
 
 watch(started, () => {
     if (props.color == 1) {
@@ -70,6 +75,11 @@ watch(props, (props) => {
     } else {
         activateBlackClock()
     }
+    if (props.status == "draw_deny1" && props.color == 0) {
+        drawStatus.value = "Draw Denied"
+    } else if (props.status == "draw_deny0" && props.color == 1) {
+        drawStatus.value = "Draw Denied"
+    }
 })
 </script>
 
@@ -82,7 +92,7 @@ watch(props, (props) => {
             <CopyLink :show="start"></CopyLink>
             <div class="buttons-container">
                 <button :class="abortClassList" data-type="secondary" @click="sendAbort">Abort</button>
-                <button :class="resignClassList" data-type="secondary" @click="sendDrawRequest">Draw</button>
+                <button :class="resignClassList" data-type="secondary" @click="drawRequest">{{ drawStatus }}</button>
                 <button :class="drawClassList" data-type="secondary" @click="sendResign">Resign</button>
             </div>
             <div :class="clockWhiteList">
