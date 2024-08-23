@@ -12,7 +12,9 @@ const drawRequested = ref(false)
 const waiting = ref(false)
 const dragPiece = ref(null);
 const draggable = ref(false);
-const dragImage = ref(null)
+let dragImg = new Image()
+dragImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" //transparent gif, resolves issue with Safari that otherwise does not allow dragging
+dragImg.style.visibility = 'hidden'
 const boardRef = ref(null);
 const pieceClassList = ref([
     ["piece", "qb", "square-3", ""],
@@ -165,30 +167,36 @@ function getPieceSquareIndex(pieceID) {
 }
 
 function dragstartHandler(ev) {
+    console.log('dragging');
     if (dragged != null) {
+        console.log('dragging != null');
         return
     }
+    console.log('dragstart after check');
     dragged = ev.target;
     start.value = getPieceSquareIndex(dragged.id);
-    ev.dataTransfer.setDragImage(dragImage.value, 0, 0); // Set the empty image as the drag image
+    //ev.dataTransfer.setDragImage(dragImage.value, 0, 0); // Set 
+    //e.dataTransfer.setDragImage(dragImg, 0, 0)
+    e.dataTransfer.effectAllowed = 'default'
+    console.log('drag start end');
 }
 
 function dragenterHandler(ev) {
+    console.log('drag enter');
     ev.preventDefault()
     if (dragged == null) {
+        console.log('drag enter = null');
         return
     }
-
+    console.log('drag enter after');
     ev.target.classList.add("drag-hover")
-    ev.dataTransfer.dropEffect = "move";
 }
 
 function dragleaveHandler(ev) {
-
+    ev.preventDefault();
     if (dragged == null) {
         return
     }
-    ev.preventDefault();
     ev.dataTransfer.dropEffect = "move";
     ev.target.classList.remove("drag-hover")
 }
@@ -212,10 +220,13 @@ function dropHandler(ev, n) {
 }
 
 function dragendHandler(ev) {
+    console.log('drag end');
     if (dragged != null) {
+        console.log('drag end != null');
         showPiece(dragged.id)
         dragged = null;
     }
+    console.log('after check');
 
     dragPiece.value.classList.remove(dragPiece.value.classList[dragPiece.value.classList.length - 1]);
     dragPiece.value.classList.add("hide");
@@ -305,7 +316,6 @@ watch(props, (props) => {
 
 <template>
     <div inert class="drag unselectable hide" draggable="false" ref="dragPiece"></div>
-    <div class="hide" ref="dragImage" alt=" "></div>
     <div class="board-container" @dragover="dragoverHandler($event)" @dragenter.prevent @dragover.prevent>
         <div class="card-container" v-if="waiting">
             <VueSpinnerBox size="100" color="rgba(132, 118, 186, 1)" />
@@ -397,7 +407,10 @@ watch(props, (props) => {
 
 .hide {
     display: none;
+    visibility: hidden;
+    background-image: url('/pieces/empty.svg') !important;
     transform: translate(1000%, 1000%);
+    transform: scale(0);
 }
 
 .square {
