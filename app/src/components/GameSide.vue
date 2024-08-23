@@ -8,6 +8,7 @@ const props = defineProps(['whiteTurn', 'whiteTime', 'blackTime', 'increment', '
 
 const lastMove = ref("")
 const moves = ref([])
+const anchorRef = ref(null)
 
 const started = ref(false)
 const gameOver = ref(false)
@@ -99,8 +100,10 @@ watch(props, (props) => {
         hideAbort()
         lastMove.value = props.move
         addMove()
+        anchorRef.value.scrollIntoView()
     }
 })
+
 </script>
 
 <template>
@@ -112,12 +115,12 @@ watch(props, (props) => {
             <div class="middle-container">
                 <ol class="moves-container">
                     <li v-for="(row, index) in moves" class="moveRow" :key="index" :id="index">
-                        {{ index }}.
+                        {{ index + 1 }}.
                         <div v-for="(move, index) in row" class="move" :key="index" :id="index">
                             {{ move }}
                         </div>
                     </li>
-                    <div id="anchor"></div>
+                    <div id="anchor" ref="anchorRef"></div>
                 </ol>
                 <CopyLink :show="start"></CopyLink>
                 <div class="buttons-container">
@@ -147,7 +150,7 @@ watch(props, (props) => {
 .moves-container {
     height: 50dvh;
     padding-left: 0;
-    overflow: scroll;
+    overflow-y: scroll;
 }
 
 .moves-container * {
