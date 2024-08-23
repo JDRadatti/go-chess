@@ -63,7 +63,11 @@ function drawRequest() {
 }
 
 function addMove() {
-    moves.value.push(lastMove.value)
+    if (moves.value.length != 0 && moves.value[moves.value.length - 1].length == 1) {
+        moves.value[moves.value.length - 1].push(lastMove.value)
+    } else {
+        moves.value.push([lastMove.value])
+    }
 }
 
 watch(started, () => {
@@ -105,14 +109,23 @@ watch(props, (props) => {
             <div :class="clockBlackList">
                 <p>{{ blackTimeFormatted }}</p>
             </div>
-            <div class="moves-container">
-                {{ moves }}
-            </div>
-            <CopyLink :show="start"></CopyLink>
-            <div class="buttons-container">
-                <button :class="abortClassList" data-type="secondary" @click="sendAbort">Abort</button>
-                <button :class="resignClassList" data-type="secondary" @click="drawRequest">{{ drawStatus }}</button>
-                <button :class="drawClassList" data-type="secondary" @click="sendResign">Resign</button>
+            <div class="middle-container">
+                <ol class="moves-container">
+                    <li v-for="(row, index) in moves" class="moveRow" :key="index" :id="index">
+                        {{ index }}.
+                        <div v-for="(move, index) in row" class="move" :key="index" :id="index">
+                            {{ move }}
+                        </div>
+                    </li>
+                    <div id="anchor"></div>
+                </ol>
+                <CopyLink :show="start"></CopyLink>
+                <div class="buttons-container">
+                    <button :class="abortClassList" data-type="secondary" @click="sendAbort">Abort</button>
+                    <button :class="resignClassList" data-type="secondary" @click="drawRequest">{{ drawStatus
+                        }}</button>
+                    <button :class="drawClassList" data-type="secondary" @click="sendResign">Resign</button>
+                </div>
             </div>
             <div :class="clockWhiteList">
                 <p>{{ whiteTimeFormatted }}</p>
@@ -124,6 +137,37 @@ watch(props, (props) => {
 <style scoped>
 .hide {
     display: none;
+}
+
+.middle-container {
+    height: 100%;
+    margin-bottom: 1rem;
+}
+
+.moves-container {
+    height: 50dvh;
+    padding-left: 0;
+    overflow: scroll;
+}
+
+.moves-container * {
+    overflow-anchor: none;
+}
+
+#anchor {
+    overflow-anchor: auto;
+    height: 1px;
+}
+
+.move {
+    padding: 0.5rem;
+}
+
+.moveRow {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
 }
 
 .buttons-container {
