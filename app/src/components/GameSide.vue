@@ -62,6 +62,7 @@ watch(props, (props) => {
         started.value = true
     }
     if (props.over) {
+        hideButtons()
         gameOver.value = true
     }
     if (props.whiteTurn) {
