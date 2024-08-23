@@ -2,6 +2,7 @@
 import GameBoard from '../components/GameBoard.vue'
 import GameSide from '../components/GameSide.vue'
 import { useWebsocket } from '../scripts/websocket.js'
+import { getPlayerID } from '../scripts/api.js'
 import { useRoute, useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
 
@@ -55,15 +56,26 @@ onMounted(() => {
             } else if (parsed.Action == "game_kill") {
                 alert("Could not find an opponenet... redirecting")
                 router.push('/play')
+            } else if (parsed.Action == "game_end_time") {
+                gameOver.value = true
+                if (color.value == 1 && parsed.PlayerID == getPlayerID()) {
+                    status.value = "WHITE WON"
+                } else if (color.value == 0 && parsed.PlayerID != getPlayerID()) {
+                    status.value = "WHITE WON"
+                } else {
+                    status.value = "BLACK WON"
+                }
             } else if (parsed.Action == "game_end") {
                 gameOver.value = true
-                if (whiteTime.value == 0 || blackTime == 0) {
-                    status.value = "on time"
-                } else {
-                    status.value = parsed.Move
-                }
                 fen.value = parsed.FEN
                 move.value = parsed.Move
+                if (move.value == "1-0") {
+                    status.value = "WHITE WON"
+                } else if (move.value == "0-1") {
+                    status.value = "BLACK WON"
+                } else if (move.value == "1/2-1/2") {
+                    status.value = "DRAW"
+                }
             } else if (parsed.Action == "draw_request") {
                 status.value = "draw_request"
             } else if (parsed.Action == "draw_deny") {
