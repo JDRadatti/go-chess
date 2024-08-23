@@ -12,6 +12,7 @@ dragImg.style.visibility = 'hidden'
 
 const router = useRouter()
 const gameOver = ref(false)
+const result = ref("")
 const drawRequested = ref(false)
 const waiting = ref(false)
 const dragPiece = ref(null);
@@ -288,17 +289,24 @@ watch(props, (props) => {
         waiting.value = true // start spinner
     }
 
-    if (props.over) {
-        gameOver.value = true
-        drawRequested.value = false
-        disableAllPieces()
-    }
 
     if (props.status == "draw_deny0" || props.status == "draw_deny1") {
         drawRequested.value = false
         enableAllPieces()
     } else if (props.status == "draw_request") {
         drawRequested.value = true
+        disableAllPieces()
+    } else if (props.status == "WHITE WON") {
+        result.value = "1-0"
+    } else if (props.status == "BLACK WON") {
+        result.value = "0-1"
+    } else if (props.status == "DRAW") {
+        result.value = "1/2-1/2"
+    }
+
+    if (props.over) {
+        gameOver.value = true
+        drawRequested.value = false
         disableAllPieces()
     }
 
@@ -314,6 +322,7 @@ watch(props, (props) => {
         </div>
         <div class="card-container" v-if="gameOver">
             <p class="heading"> {{ status }} </p>
+            <p class="subheading"> {{ result }} </p>
             <div class="card-buttons">
                 <button data-type="secondary" @click="newGame">New Game</button>
                 <button data-type="primary" @click="rematch">Rematch</button>
