@@ -58,12 +58,12 @@ onMounted(() => {
                 router.push('/play')
             } else if (parsed.Action == "game_end_time") {
                 gameOver.value = true
-                if (parsed.PlayerID == getPlayerID()) {
-                    if (color.value == 1) {
-                        status.value = "WHITE WON"
-                    } else if (color.value == 0) {
-                        status.value = "BLACK WON"
-                    }
+                if (color.value == 1 && parsed.PlayerID == getPlayerID()) {
+                    status.value = "WHITE WON"
+                } else if (color.value == 0 && parsed.PlayerID != getPlayerID()) {
+                    status.value = "WHITE WON"
+                } else {
+                    status.value = "BLACK WON"
                 }
             } else if (parsed.Action == "game_end") {
                 gameOver.value = true
@@ -76,7 +76,6 @@ onMounted(() => {
                 } else if (move.value == "1/2-1/2") {
                     status.value = "DRAW"
                 }
-
             } else if (parsed.Action == "draw_request") {
                 status.value = "draw_request"
             } else if (parsed.Action == "draw_deny") {
