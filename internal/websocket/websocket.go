@@ -58,13 +58,9 @@ func (ws *WSHandler) handshake(conn *websocket.Conn) (*Player, *Outbound, bool) 
 	}
 
 	if game, ok := ws.Lobby.GetGameFromPlayerID(in.PlayerID); ok {
-		if game.id == ws.GameID {
-			player := NewPlayer(ws.Lobby, conn, game)
-			player.id = in.PlayerID
-			return player, handshakeSuccess(in.PlayerID, game), true
-		} else {
-			return nil, handshakeFail(), false
-		}
+		player := NewPlayer(ws.Lobby, conn, game)
+		player.id = in.PlayerID
+		return player, handshakeSuccess(in.PlayerID, game), true
 	}
 
 	// Player not already in game (opened game link)
