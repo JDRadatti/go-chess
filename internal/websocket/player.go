@@ -110,7 +110,20 @@ func (p *Player) read() {
 				log.Println("invalid player id", p.id, in.PlayerID)
 				continue // Soft handle invalid ids
 			}
-			p.game.move <- in
+			switch in.Action {
+			case MOVE:
+				p.game.move <- in
+			case RESIGN:
+				p.game.resign <- in
+			case DRAW_DENY:
+				fallthrough
+			case DRAW_REQUEST:
+				fallthrough
+			case DRAW_ACCEPT:
+				p.game.draw <- in
+			case ABORT:
+				p.game.draw <- in
+			}
 		}
 	}
 }
