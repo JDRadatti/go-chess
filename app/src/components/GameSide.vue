@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import CopyLink from '../components/CopyLink.vue'
+import { sendAbort, sendResign, acceptDraw, denyDraw, sendDrawRequest } from '../scripts/websocket.js'
 
 // time and increment should be in seconds
 const props = defineProps(['whiteTurn', 'whiteTime', 'blackTime', 'increment', 'start', 'color', 'over'])
@@ -61,6 +62,15 @@ watch(props, (props) => {
                 <p>{{ blackTimeFormatted }}</p>
             </div>
             <CopyLink :show="start"></CopyLink>
+            <div class="buttons">
+                <button @click="sendAbort">Abort</button>:
+                <button @click="sendDrawRequest">Draw</button>:
+                <div>
+                    <button @click="acceptDraw">Yes</button>:
+                    <button @click="denyDraw">No</button>:
+                </div>
+                <button @click="sendResign">Resign</button>:
+            </div>
             <div :class="clockWhiteList">
                 <p>{{ whiteTimeFormatted }}</p>
             </div>
