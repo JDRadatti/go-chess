@@ -12,9 +12,6 @@ const drawRequested = ref(false)
 const waiting = ref(false)
 const dragPiece = ref(null);
 const draggable = ref(false);
-let dragImg = new Image()
-dragImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" //transparent gif, resolves issue with Safari that otherwise does not allow dragging
-dragImg.style.visibility = 'hidden'
 const boardRef = ref(null);
 const pieceClassList = ref([
     ["piece", "qb", "square-3", ""],
@@ -167,28 +164,24 @@ function getPieceSquareIndex(pieceID) {
 }
 
 function dragstartHandler(ev) {
-    console.log('dragging');
     if (dragged != null) {
-        console.log('dragging != null');
         return
     }
-    console.log('dragstart after check');
+    ev.srcElement.style = "hide";
     dragged = ev.target;
     start.value = getPieceSquareIndex(dragged.id);
-    //ev.dataTransfer.setDragImage(dragImage.value, 0, 0); // Set 
-    //e.dataTransfer.setDragImage(dragImg, 0, 0)
-    e.dataTransfer.effectAllowed = 'default'
-    console.log('drag start end');
+
+    let dragImg = new Image()
+    dragImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" //transparent gif, resolves issue with Safari that otherwise does not allow dragging
+    dragImg.style.visibility = 'hidden'
+    event.dataTransfer.setDragImage(dragImg, 0, 0)
 }
 
 function dragenterHandler(ev) {
-    console.log('drag enter');
     ev.preventDefault()
     if (dragged == null) {
-        console.log('drag enter = null');
         return
     }
-    console.log('drag enter after');
     ev.target.classList.add("drag-hover")
 }
 
@@ -220,13 +213,10 @@ function dropHandler(ev, n) {
 }
 
 function dragendHandler(ev) {
-    console.log('drag end');
     if (dragged != null) {
-        console.log('drag end != null');
         showPiece(dragged.id)
         dragged = null;
     }
-    console.log('after check');
 
     dragPiece.value.classList.remove(dragPiece.value.classList[dragPiece.value.classList.length - 1]);
     dragPiece.value.classList.add("hide");
