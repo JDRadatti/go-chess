@@ -52,8 +52,8 @@ onMounted(() => {
             } else if (parsed.Action == "join_fail") {
                 alert("game full... redirecting")
                 router.push('/play')
-            } else if (parsed.Action == "matchmaking_error") {
-                alert("Matchmaking took too long.")
+            } else if (parsed.Action == "game_kill") {
+                alert("Could not find an opponenet... redirecting")
                 router.push('/play')
             } else if (parsed.Action == "game_end") {
                 gameOver.value = true
