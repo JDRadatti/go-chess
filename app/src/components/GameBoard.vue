@@ -1,13 +1,14 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { sendMove } from '../scripts/websocket.js'
+import { sendMove, acceptDraw, denyDraw } from '../scripts/websocket.js'
 import { VueSpinnerBox } from 'vue3-spinners';
 
 const props = defineProps(['start', 'color', 'waiting', 'fen', 'count', 'over', 'status'])
 
 const router = useRouter()
 const gameOver = ref(false)
+const drawRequested = ref(false)
 const waiting = ref(false)
 const dragPiece = ref(null);
 const draggable = ref(false);
@@ -287,8 +288,18 @@ watch(props, (props) => {
 
     if (props.over) {
         gameOver.value = true
+        drawRequested.value = false
         disableAllPieces()
     }
+
+    if (props.status == "draw_deny0" || props.status == "draw_deny1") {
+        drawRequested.value = false
+        enableAllPieces()
+    } else if (props.status == "draw_request") {
+        drawRequested.value = true
+        disableAllPieces()
+    }
+
 })
 </script>
 
@@ -306,6 +317,13 @@ watch(props, (props) => {
             <div class="card-buttons">
                 <button data-type="secondary" @click="newGame">New Game</button>
                 <button data-type="primary" @click="rematch">Rematch</button>
+            </div>
+        </div>
+        <div class="card-container" v-if="drawRequested">
+            <p class="heading"> Opponent offered a draw.</p>
+            <div class="card-buttons">
+                <button data-type="secondary" @click="acceptDraw">Accept</button>
+                <button data-type="primary" @click="denyDraw">Deny</button>
             </div>
         </div>
         <div class="board" draggable="false">
@@ -339,6 +357,7 @@ watch(props, (props) => {
 }
 
 .card-container {
+    text-align: center;
     z-index: 100;
     display: flex;
     justify-content: center;
