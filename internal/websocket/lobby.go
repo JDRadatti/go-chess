@@ -89,7 +89,12 @@ func (l *Lobby) Match(request *GameRequest) *GameResponse {
 	var game *Game
 	select {
 	case g := <-l.GamePool:
-		game = g
+		if g.state == over {
+            game = NewGame(l, request.Time, request.Increment)
+            l.GamePool <- game
+		} else {
+            game = g
+		}
 	default:
 		game = NewGame(l, request.Time, request.Increment)
 		l.GamePool <- game
