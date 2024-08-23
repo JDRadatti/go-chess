@@ -149,6 +149,7 @@ watch(props, (props) => {
 
 .moves-container {
     height: 50dvh;
+    width: 100%;
     padding-left: 0;
     overflow-y: scroll;
 }
