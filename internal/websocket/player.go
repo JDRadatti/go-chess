@@ -122,7 +122,7 @@ func (p *Player) read() {
 			case DRAW_ACCEPT:
 				p.game.draw <- in
 			case ABORT:
-				p.game.draw <- in
+				p.game.abort <- in
 			}
 		}
 	}
