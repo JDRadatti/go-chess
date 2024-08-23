@@ -56,11 +56,22 @@ onMounted(() => {
                 router.push('/play')
             } else if (parsed.Action == "game_end") {
                 gameOver.value = true
-                status.value = parsed.move
+                if (whiteTime.value == 0 || blackTime == 0) {
+                    status.value = "on time"
+                } else if (parsed.Move[paresed.Move.length - 1] == "#") {
+                    status.value = "checkmate"
+                } else {
+                    status.value = "stalemate"
+                }
                 fen.value = parsed.FEN
                 move.value = parsed.Move
             } else if (parsed.Action == "draw_request") {
-                console.log("draw request")
+                status.value = "draw_request"
+            } else if (parsed.Action == "draw_deny") {
+                status.value = "draw_deny" + parsed.Player
+            } else if (parsed.Action == "draw") {
+                status.value = "draw"
+                gameOver.value = true
             } else if (parsed.Action == "abort") {
                 status.value = "aborted"
                 gameOver.value = true
@@ -90,7 +101,7 @@ onMounted(() => {
             :status="status" />
         <div>
             <GameSide :start="started" :whiteTurn="whiteTurn" :blackTime="blackTime" :whiteTime="whiteTime"
-                :color="color" :over="gameOver" />
+                :color="color" :over="gameOver" :status="status" />
         </div>
     </main>
 </template>
