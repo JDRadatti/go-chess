@@ -6,13 +6,16 @@ import { VueSpinnerBox } from 'vue3-spinners';
 
 const props = defineProps(['start', 'color', 'waiting', 'fen', 'count', 'over', 'status'])
 
+let dragImg = new Image()
+dragImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" //transparent gif, resolves issue with Safari that otherwise does not allow dragging
+dragImg.style.visibility = 'hidden'
+
 const router = useRouter()
 const gameOver = ref(false)
 const drawRequested = ref(false)
 const waiting = ref(false)
 const dragPiece = ref(null);
 const draggable = ref(false);
-const dragImage = ref(null)
 const boardRef = ref(null);
 const pieceClassList = ref([
     ["piece", "qb", "square-3", ""],
@@ -168,9 +171,11 @@ function dragstartHandler(ev) {
     if (dragged != null) {
         return
     }
+    ev.srcElement.style = "hide";
     dragged = ev.target;
     start.value = getPieceSquareIndex(dragged.id);
-    ev.dataTransfer.setDragImage(dragImage.value, 0, 0); // Set the empty image as the drag image
+
+    event.dataTransfer.setDragImage(dragImg, 0, 0)
 }
 
 function dragenterHandler(ev) {
@@ -178,17 +183,14 @@ function dragenterHandler(ev) {
     if (dragged == null) {
         return
     }
-
     ev.target.classList.add("drag-hover")
-    ev.dataTransfer.dropEffect = "move";
 }
 
 function dragleaveHandler(ev) {
-
+    ev.preventDefault();
     if (dragged == null) {
         return
     }
-    ev.preventDefault();
     ev.dataTransfer.dropEffect = "move";
     ev.target.classList.remove("drag-hover")
 }
@@ -305,7 +307,6 @@ watch(props, (props) => {
 
 <template>
     <div inert class="drag unselectable hide" draggable="false" ref="dragPiece"></div>
-    <div class="hide" ref="dragImage" alt=" "></div>
     <div class="board-container" @dragover="dragoverHandler($event)" @dragenter.prevent @dragover.prevent>
         <div class="card-container" v-if="waiting">
             <VueSpinnerBox size="100" color="rgba(132, 118, 186, 1)" />
@@ -397,7 +398,10 @@ watch(props, (props) => {
 
 .hide {
     display: none;
+    visibility: hidden;
+    background-image: url('/pieces/empty.svg') !important;
     transform: translate(1000%, 1000%);
+    transform: scale(0);
 }
 
 .square {
