@@ -8,6 +8,9 @@ const props = defineProps(['whiteTurn', 'whiteTime', 'blackTime', 'increment', '
 
 const started = ref(false)
 const gameOver = ref(false)
+const abortClassList = ref(["abort", "hide"])
+const resignClassList = ref(["resign", "hide"])
+const drawClassList = ref(["draw", "hide"])
 const clocksClassList = ref(["clocks", ""])
 const clockWhiteList = ref(["clock", ""])
 const clockBlackList = ref(["clock", ""])
@@ -34,10 +37,24 @@ function formatSeconds(seconds) {
     return new Date(seconds * 1000).toISOString().slice(14, 19)
 }
 
+function showButtons() {
+    abortClassList.value[1] = ""
+    drawClassList.value[1] = ""
+    resignClassList.value[1] = ""
+}
+
+function hideButtons() {
+    abortClassList.value[1] = "hide"
+    drawClassList.value[1] = "hide"
+    resignClassList.value[1] = "hide"
+}
+
+
 watch(started, () => {
     if (props.color == 1) {
         flip()
     }
+    showButtons()
 })
 
 watch(props, (props) => {
@@ -62,14 +79,10 @@ watch(props, (props) => {
                 <p>{{ blackTimeFormatted }}</p>
             </div>
             <CopyLink :show="start"></CopyLink>
-            <div class="buttons">
-                <button @click="sendAbort">Abort</button>:
-                <button @click="sendDrawRequest">Draw</button>:
-                <div>
-                    <button @click="acceptDraw">Yes</button>:
-                    <button @click="denyDraw">No</button>:
-                </div>
-                <button @click="sendResign">Resign</button>:
+            <div class="buttons-container">
+                <button :class="abortClassList" data-type="secondary" @click="sendAbort">Abort</button>
+                <button :class="resignClassList" data-type="secondary" @click="sendDrawRequest">Draw</button>
+                <button :class="drawClassList" data-type="secondary" @click="sendResign">Resign</button>
             </div>
             <div :class="clockWhiteList">
                 <p>{{ whiteTimeFormatted }}</p>
@@ -79,6 +92,16 @@ watch(props, (props) => {
 </template>
 
 <style scoped>
+.hide {
+    display: none;
+}
+
+.buttons-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+}
+
 p {
     color: var(--light-square);
     width: 10ch;
