@@ -7,6 +7,7 @@ const props = defineProps(['start', 'color', 'waiting', 'fen', 'count', 'over'])
 
 const waiting = ref(false)
 const dragPiece = ref(null);
+const draggable = ref(false);
 const dragImage = ref(null)
 const boardRef = ref(null);
 const pieceClassList = ref([
@@ -129,6 +130,14 @@ function hideAllPieces() {
     for (let i = 0; i < pieceClassList.value.length; i++) {
         hidePiece(i)
     }
+}
+
+function disableAllPieces() {
+    draggable.value = false
+}
+
+function enableAllPieces() {
+    draggable.value = true
 }
 
 function updatePieceType(pieceID, pieceIcon) {
@@ -258,6 +267,7 @@ watch(props, (props) => {
 
     if (props.start && waiting.value == true) {
         showAllPieces()
+        enableAllPieces()
         waiting.value = false // stop spinner
     }
 
@@ -267,6 +277,7 @@ watch(props, (props) => {
 
     if (props.over) {
         alert("game over")
+        disableAllPieces()
     }
 })
 </script>
@@ -284,9 +295,9 @@ watch(props, (props) => {
                 @dragleave="dragleaveHandler($event)" @drop="dropHandler($event, n)" @dragover.prevent>
             </div>
         </div>
-        <div v-for="(classList, index) in pieceClassList" :class="classList" :key="index" :id="index" draggable="true"
-            @dragstart="dragstartHandler($event)" @dragend="dragendHandler($event)" @drop="captureHandler($event)"
-            @dragover.prevent @dragenter.prevent>
+        <div v-for="(classList, index) in pieceClassList" :class="classList" :key="index" :id="index"
+            :draggable="draggable" @dragstart="dragstartHandler($event)" @dragend="dragendHandler($event)"
+            @drop="captureHandler($event)" @dragover.prevent @dragenter.prevent>
         </div>
     </div>
 </template>
