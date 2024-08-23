@@ -313,8 +313,7 @@ watch(props, (props) => {
             <p> Waiting for Opponenet... </p>
         </div>
         <div class="card-container" v-if="gameOver">
-            <p class="heading"> Game Over </p>
-            <p class="subtext"> {{ status }} </p>
+            <p class="heading"> {{ status }} </p>
             <div class="card-buttons">
                 <button data-type="secondary" @click="newGame">New Game</button>
                 <button data-type="primary" @click="rematch">Rematch</button>
