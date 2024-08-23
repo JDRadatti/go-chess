@@ -26,6 +26,11 @@ func TestIntegration(t *testing.T) {
 			moves:    []string{"d2d4", "h7h6", "d4d6", "d4d5", "g8f6", "e2e4", "e7e6", "f1d3", "f8d6", "g1f3", "e8h8", "d5d6"},
 			expected: []string{"d4", "h6", "", "d5", "Nf6", "e4", "e6", "Bd3", "Bd6", "Nf3", "O-O", ""},
 		},
+		{
+			name:     "Valid pawn captures",
+            moves:    []string{"e2e4", "f7f5", "e4f5", "e7e6", "f5e6"},
+			expected: []string{"e4", "f5", "exf5", "e6", "fxe6"},
+		},
 	}
 
 	for j, input := range inputs {
@@ -68,6 +73,23 @@ func TestValidMoves(t *testing.T) {
 			destSquares:  []int{40, 41, 39, 16, 0, 24, 26}, // 39 tests edge case (literally)
 			expected:     []bool{true, false, false, true, false, true, false},
 			turn:         []Player{WHITE, WHITE, WHITE, BLACK, BLACK, BLACK, BLACK},
+		},
+		{
+			name: "basic pawn movements",
+			board: []byte{
+				'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
+				'P', ' ', ' ', ' ', 'P', 'P', 'P', 'P',
+				' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				' ', 'P', 'P', 'P', ' ', ' ', ' ', ' ',
+				' ', ' ', ' ', 'p', ' ', ' ', ' ', ' ',
+				' ', ' ', 'p', ' ', ' ', 'p', ' ', 'p',
+				'p', 'p', 'p', 'p', 'p', ' ', 'p', ' ',
+				'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
+			},
+			startSquares: []int{26},
+			destSquares:  []int{35},
+			expected:     []bool{true},
+			turn:         []Player{BLACK},
 		},
 		{
 			name: "basic knight movement",

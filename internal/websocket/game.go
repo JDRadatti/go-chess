@@ -203,7 +203,7 @@ func (g *Game) play() {
 				out := g.out(GAME_END, player.id)
 				g.players[whiteIndex].send <- out
 				g.players[blackIndex].send <- out
-                return
+				return
 			}
 
 			g.timeRemaining[index] += g.increment
