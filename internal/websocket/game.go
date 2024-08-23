@@ -235,11 +235,11 @@ func (g *Game) play() {
 			}
 		case drawRequest := <-g.draw:
 			if index, ok := g.playerIndex(drawRequest.PlayerID); ok {
-				if drawRequest.Action == DRAW_REQUEST {
+				if g.pendingDraw == -1 && drawRequest.Action == DRAW_REQUEST {
 					out := g.out(DRAW_REQUEST, g.playerIDs[index])
-					g.players[index+1%2].send <- out // send to other index
+					g.players[(index+1)%2].send <- out // send to other index
 					g.pendingDraw = index
-				} else if g.pendingDraw == index+1%2 && drawRequest.Action == DRAW_ACCEPT {
+				} else if g.pendingDraw == (index+1)%2 && drawRequest.Action == DRAW_ACCEPT {
 					out := g.out(DRAW, g.playerIDs[index])
 					g.players[whiteIndex].send <- out
 					g.players[blackIndex].send <- out
