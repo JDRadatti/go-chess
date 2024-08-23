@@ -6,6 +6,10 @@ import { VueSpinnerBox } from 'vue3-spinners';
 
 const props = defineProps(['start', 'color', 'waiting', 'fen', 'count', 'over', 'status'])
 
+let dragImg = new Image()
+dragImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" //transparent gif, resolves issue with Safari that otherwise does not allow dragging
+dragImg.style.visibility = 'hidden'
+
 const router = useRouter()
 const gameOver = ref(false)
 const drawRequested = ref(false)
@@ -171,9 +175,6 @@ function dragstartHandler(ev) {
     dragged = ev.target;
     start.value = getPieceSquareIndex(dragged.id);
 
-    let dragImg = new Image()
-    dragImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" //transparent gif, resolves issue with Safari that otherwise does not allow dragging
-    dragImg.style.visibility = 'hidden'
     event.dataTransfer.setDragImage(dragImg, 0, 0)
 }
 
