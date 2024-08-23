@@ -195,7 +195,7 @@ func (b *Board) validMove(start *Square, dest *Square) bool {
 		}
 		if dest.empty() && indexDiff%WIDTH != 0 {
 			return false // moved diagonal without capture
-		} else if start.hasMoved() && indexDiff > WIDTH {
+		} else if start.hasMoved() && indexDiff > WIDTH + 1 {
 			return false // moved two forward on non-first move
 		}
 	}
