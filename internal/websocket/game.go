@@ -246,6 +246,7 @@ func (g *Game) play() {
 					return
 				} else if drawRequest.Action == DRAW_DENY {
 					out := g.out(DRAW_DENY, g.playerIDs[index])
+					out.Player = g.playerType(out.PlayerID)
 					g.players[whiteIndex].send <- out
 					g.players[blackIndex].send <- out
 					g.pendingDraw = -1
