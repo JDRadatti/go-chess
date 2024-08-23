@@ -39,6 +39,10 @@ type Game struct {
 	join          chan *Player
 	leave         chan *Player
 	move          chan *Inbound // Moves requests sent from both white and black
+	resign        chan *Inbound
+	abort         chan *Inbound
+	draw          chan *Inbound
+	pendingDraw   int
 	board         *chess.Board
 	lobby         *Lobby
 	state         GameState
@@ -58,12 +62,16 @@ func NewGame(l *Lobby, time int, increment int) *Game {
 	newGame := &Game{
 		id:            generateGameID(),
 		move:          make(chan *Inbound),
+		resign:        make(chan *Inbound),
+		draw:          make(chan *Inbound),
+		abort:         make(chan *Inbound),
 		join:          make(chan *Player),
 		leave:         make(chan *Player),
 		board:         &board,
 		timeRemaining: [2]int{time, time},
 		players:       [2]*Player{},
 		playerIDs:     [2]PlayerID{},
+		pendingDraw:   -1,
 		increment:     increment,
 		lobby:         l,
 		state:         waiting,
@@ -197,6 +205,7 @@ func (g *Game) play() {
 				out.Move = move
 				g.players[whiteIndex].send <- out
 				g.players[blackIndex].send <- out
+				g.pendingDraw = -1
 			}
 
 			if _, over := g.board.GameOver(); over {
@@ -207,6 +216,41 @@ func (g *Game) play() {
 			}
 
 			g.timeRemaining[index] += g.increment
+		case resignRequest := <-g.resign:
+			if index, ok := g.playerIndex(resignRequest.PlayerID); ok {
+				out := g.out(RESIGN, g.playerIDs[index])
+				g.players[whiteIndex].send <- out
+				g.players[blackIndex].send <- out
+				return
+			}
+		case abortRequest := <-g.abort:
+			if index, ok := g.playerIndex(abortRequest.PlayerID); ok {
+				if !g.board.CanAbort() {
+					continue
+				}
+				out := g.out(ABORT, g.playerIDs[index])
+				g.players[whiteIndex].send <- out
+				g.players[blackIndex].send <- out
+				return
+			}
+		case drawRequest := <-g.draw:
+			if index, ok := g.playerIndex(drawRequest.PlayerID); ok {
+				if g.pendingDraw == -1 && drawRequest.Action == DRAW_REQUEST {
+					out := g.out(DRAW_REQUEST, g.playerIDs[index])
+					g.players[(index+1)%2].send <- out // send to other index
+					g.pendingDraw = index
+				} else if g.pendingDraw == (index+1)%2 && drawRequest.Action == DRAW_ACCEPT {
+					out := g.out(DRAW, g.playerIDs[index])
+					g.players[whiteIndex].send <- out
+					g.players[blackIndex].send <- out
+					return
+				} else if drawRequest.Action == DRAW_DENY {
+					out := g.out(DRAW_DENY, g.playerIDs[index])
+					g.players[whiteIndex].send <- out
+					g.players[blackIndex].send <- out
+					g.pendingDraw = -1
+				}
+			}
 
 		}
 	}

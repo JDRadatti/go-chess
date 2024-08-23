@@ -40,7 +40,56 @@ export function sendMove(move) {
             PlayerID: getPlayerID(),
             GameID: gameID.value,
             Move: move,
-            date: Date.now(),
+        };
+        CONN.send(JSON.stringify(msg));
+    }
+}
+
+export function sendResign() {
+    if (CONN != null) {
+        const msg = {
+            Action: "resign",
+            PlayerID: getPlayerID(),
+        };
+        CONN.send(JSON.stringify(msg));
+    }
+}
+
+export function sendDrawRequest() {
+    if (CONN != null) {
+        const msg = {
+            Action: "draw_request",
+            PlayerID: getPlayerID(),
+        };
+        CONN.send(JSON.stringify(msg));
+    }
+}
+
+export function acceptDraw() {
+    if (CONN != null) {
+        const msg = {
+            Action: "draw_accept",
+            PlayerID: getPlayerID(),
+        };
+        CONN.send(JSON.stringify(msg));
+    }
+}
+
+export function denyDraw() {
+    if (CONN != null) {
+        const msg = {
+            Action: "draw_deny",
+            PlayerID: getPlayerID(),
+        };
+        CONN.send(JSON.stringify(msg));
+    }
+}
+
+export function sendAbort() {
+    if (CONN != null) {
+        const msg = {
+            Action: "abort",
+            PlayerID: getPlayerID(),
         };
         CONN.send(JSON.stringify(msg));
     }
