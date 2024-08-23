@@ -13,6 +13,7 @@ var whiteTime = ref(0)
 var blackTime = ref(0)
 var increment = ref(0)
 const gameID = ref("")
+const status = ref("")
 const started = ref(false)
 const waiting = ref(false)
 const move = ref("")
@@ -55,13 +56,16 @@ onMounted(() => {
                 router.push('/play')
             } else if (parsed.Action == "game_end") {
                 gameOver.value = true
+                status.value = parsed.move
                 fen.value = parsed.FEN
                 move.value = parsed.Move
             } else if (parsed.Action == "draw_request") {
                 console.log("draw request")
             } else if (parsed.Action == "abort") {
+                status.value = "aborted"
                 gameOver.value = true
             } else if (parsed.Action == "resign") {
+                status.value = "resigned"
                 gameOver.value = true
             } else if (parsed.Action == "time_update") {
                 whiteTime.value = parsed.WhiteTime
@@ -82,8 +86,8 @@ onMounted(() => {
 
 <template>
     <main class="game-container">
-        <GameBoard :start="started" :color="color" :waiting="waiting" :fen="fen" :count="messageCount"
-            :over="gameOver" />
+        <GameBoard :start="started" :color="color" :waiting="waiting" :fen="fen" :count="messageCount" :over="gameOver"
+            :status="status" />
         <div>
             <GameSide :start="started" :whiteTurn="whiteTurn" :blackTime="blackTime" :whiteTime="whiteTime"
                 :color="color" :over="gameOver" />
