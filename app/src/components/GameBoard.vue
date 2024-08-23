@@ -7,6 +7,7 @@ const props = defineProps(['start', 'color', 'waiting', 'fen', 'count', 'over'])
 
 const waiting = ref(false)
 const dragPiece = ref(null);
+const dragImage = ref(null)
 const boardRef = ref(null);
 const pieceClassList = ref([
     ["piece", "qb", "square-3", ""],
@@ -154,25 +155,13 @@ function dragstartHandler(ev) {
     if (dragged != null) {
         return
     }
-
     dragged = ev.target;
-    hidePiece(dragged.id);
-
     start.value = getPieceSquareIndex(dragged.id);
-
-    // Move dragPiece to the cursor position. 
-    // This is because default drag creates an undesired opacity 
-    if (dragPiece.value.classList[dragPiece.value.classList.length - 1] == "hide") {
-        dragPiece.value.classList.add(dragged.classList[1]);
-        dragPiece.value.classList.remove(dragPiece.value.classList[dragPiece.value.classList.length - 2]);
-        dragPiece.value.style.setProperty('--cursor-y', ev.pageY - dragPiece.value.offsetWidth / 2 + "px");
-        dragPiece.value.style.setProperty('--cursor-x', ev.pageX - dragPiece.value.offsetWidth / 2 + "px");
-    }
-    return
+    ev.dataTransfer.setDragImage(dragImage.value, 0, 0); // Set the empty image as the drag image
 }
 
 function dragenterHandler(ev) {
-
+    ev.preventDefault()
     if (dragged == null) {
         return
     }
@@ -221,6 +210,14 @@ function dragendHandler(ev) {
 
 function dragoverHandler(ev) {
     // Note: the piece should always be the last element in the dragPiece's classList
+    if (dragged == null || dragPiece.value == null) {
+        return
+    }
+    hidePiece(dragged.id);
+    if (dragPiece.value.classList[dragPiece.value.classList.length - 1] == "hide") {
+        dragPiece.value.classList.add(dragged.classList[1]);
+        dragPiece.value.classList.remove(dragPiece.value.classList[dragPiece.value.classList.length - 2]);
+    }
     dragPiece.value.style.setProperty('--cursor-y', ev.pageY - dragPiece.value.offsetWidth / 2 + "px");
     dragPiece.value.style.setProperty('--cursor-x', ev.pageX - dragPiece.value.offsetWidth / 2 + "px");
 }
@@ -276,6 +273,7 @@ watch(props, (props) => {
 
 <template>
     <div inert class="drag unselectable hide" draggable="false" ref="dragPiece"></div>
+    <div class="hide" ref="dragImage" alt=" "></div>
     <div class="board-container" @dragover="dragoverHandler($event)" @dragenter.prevent @dragover.prevent>
         <div class="spinner-container" v-if="waiting">
             <VueSpinnerBox size="100" color="rgba(132, 118, 186, 1)" />
@@ -283,8 +281,7 @@ watch(props, (props) => {
         </div>
         <div class="board" draggable="false">
             <div class="square unselectable" v-for="n in 64" draggable="false" @dragenter="dragenterHandler($event)"
-                @dragleave="dragleaveHandler($event)" @drop="dropHandler($event, n)" @dragover.prevent
-                @dragenter.prevent>
+                @dragleave="dragleaveHandler($event)" @drop="dropHandler($event, n)" @dragover.prevent>
             </div>
         </div>
         <div v-for="(classList, index) in pieceClassList" :class="classList" :key="index" :id="index" draggable="true"
