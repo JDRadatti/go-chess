@@ -57,6 +57,12 @@ onMounted(() => {
                 gameOver.value = true
                 fen.value = parsed.FEN
                 move.value = parsed.Move
+            } else if (parsed.Action == "draw_request") {
+                console.log("draw request")
+            } else if (parsed.Action == "abort") {
+                gameOver.value = true
+            } else if (parsed.Action == "resign") {
+                gameOver.value = true
             } else if (parsed.Action == "time_update") {
                 whiteTime.value = parsed.WhiteTime
                 blackTime.value = parsed.BlackTime
