@@ -1,8 +1,10 @@
 package websocket
 
 import (
+	"fmt"
 	"github.com/JDRadatti/reptile/internal/chess"
 	"log"
+	"strings"
 )
 
 var (
@@ -76,6 +78,21 @@ func (l *Lobby) Fail() *GameResponse {
 	}
 }
 
+func (l *Lobby) String() string {
+	builder := strings.Builder{}
+	builder.WriteString(fmt.Sprintf("#games %d, #players %d, #gamepool %d\n", len(l.Games), len(l.Players), len(l.GamePool)))
+	for _, game := range l.Games {
+		builder.WriteString(fmt.Sprintf("-- %s --\n", string(game.id)))
+		for i, pid := range game.playerIDs {
+			if pid != "" {
+				builder.WriteString(fmt.Sprintf("%d %s\n", i, string(pid)))
+			}
+		}
+	}
+
+	return builder.String()
+}
+
 func (l *Lobby) Match(request *GameRequest) *GameResponse {
 	if game, ok := l.GetGameFromPlayerID(request.PlayerID); ok {
 		log.Printf("player %s already in game %s", request.PlayerID, game.id)
@@ -90,10 +107,10 @@ func (l *Lobby) Match(request *GameRequest) *GameResponse {
 	select {
 	case g := <-l.GamePool:
 		if g.state == over {
-            game = NewGame(l, request.Time, request.Increment)
-            l.GamePool <- game
+			game = NewGame(l, request.Time, request.Increment)
+			l.GamePool <- game
 		} else {
-            game = g
+			game = g
 		}
 	default:
 		game = NewGame(l, request.Time, request.Increment)
