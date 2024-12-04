@@ -14,6 +14,18 @@ a,
     padding: 3px;
 }
 
+hr {
+    padding: 1em 0 0 0;
+    border: none; 
+    border-bottom: 0.5px solid gray;
+}
+
+.experience-container {
+    display: flex; 
+    justify-content: space-between;
+    align-items: center;
+}
+
 .game-container {
     display: flex;
     flex-direction: row;
