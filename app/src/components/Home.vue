@@ -22,7 +22,7 @@
         </ul>
         <hr/>
         <h3>Education</h3>
-        <h4 class="experience-container">University of California, Berkeley -- Computer Science <small>(2018-2024)</small></h4>
+        <h4 class="experience-container">University of California, Berkeley -- Computer Science <small>(2018-2022)</small></h4>
         <ul>
             <li>Operating Systems & System Programming (C)</li> 
             <li>Computer Graphics (C++)</li> 
@@ -37,7 +37,7 @@
         <h3>Links</h3>
         <ul>
             <li><a href="https://Github.com/JDRadatti">GitHub</a></li>
-            <li><a href="www.linkedin.com/in/justin-radatti-000">LinkedIn</a></li>
+            <li><a href="https://www.linkedin.com/in/justin-radatti-000/">LinkedIn</a></li>
         </ul>
     </div>
 </template>
