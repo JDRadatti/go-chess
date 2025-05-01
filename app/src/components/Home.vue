@@ -22,7 +22,7 @@
         </ul>
         <hr/>
         <h3>Education</h3>
-        <h4>University of California, Berkeley</h4>
+        <h4 class="experience-container"> Draco Ova Holdings <small>(2018-2024)</small></h4>
         <ul>
             <li>Operating Systems & System Programming (C)</li> 
             <li>Computer Graphics (C++)</li> 
