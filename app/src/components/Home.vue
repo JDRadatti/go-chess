@@ -8,7 +8,7 @@
         <h3>Experience</h3>
         <ul>
             <li><div class="experience-container">Differentiated Therapeutics <small>Software Engineer (2+ Years)</small></div></li>
-            <li>Deschutes Public Library Foundation Website [In Progress]: <a href="https://main.d3gasdxvwq15bg.amplifyapp.com/">https://main.d3gasdxvwq15bg.amplifyapp.com/</a></li>
+            <li>Deschutes Public Library Foundation Website: <a href="https://dplfoundation.org">https://dplfoundation.org</a></li>
             <li>Deschutes Endodontics Website: <a href="https://deschutesendo.com/">https://deschutesendo.com/</a></li>
             <li><div class="experience-container"> Draco Ova Holdings <small>Software Engineer Intern (3 Months)</small></div></li>
             <li><div class="experience-container">RockBot <small>Software Engineer Intern (3 Months)</small></div></li>
